@@ -1,73 +1,113 @@
 #!/bin/bash
-# Grok Port Installer for Batocera - NOOBMASTER99
+# ===============================================
+#   Grok — In-Game Vision Assistant
+#   One-button launch • North button ready
+# ===============================================
 
-echo "=== Installing Grok Chat + Overlay ==="
+clear
+echo "========================================"
+echo "           GROK IS STARTING"
+echo "     Grok Powered In-Game Assistant"
+echo "========================================"
 
-mkdir -p /userdata/roms/ports/Grok
+echo "→ Installing libraries..."
+python3 -m ensurepip --upgrade --default-pip > /dev/null 2>&1
+python3 -m pip install --break-system-packages --quiet pillow requests opencv-python-headless pygame
 
-cat > /userdata/roms/ports/Grok/Grok.sh << 'EOF'
-#!/bin/bash
-echo "=== Grok - Your Retro Gaming Buddy ==="
+echo "→ Setting up Grok..."
+mkdir -p ~/grok
+cd ~/grok
 
-API_KEY=$(batocera-settings get xai.api.key)
-if [ -z "$API_KEY" ]; then
-    echo "❌ API key not found!"
-    echo "Add it with: batocera-settings set xai.api.key 'xai-...'"
-    read -p "Press Enter..."; exit 1
-fi
-
-python3 - <<'PY'
-import tkinter as tk
+cat > grok.py << 'EOF'
+#!/usr/bin/env python3
+import time, os, base64, requests, tkinter as tk, threading, pygame
+from datetime import datetime
+from PIL import ImageGrab
 from tkinter import scrolledtext
-import requests, threading
 
-API_KEY = "$API_KEY"
+API_KEY = "xai-UCcQcKtlvC4TaXxqotml48cW8x9osoSIYPTJcFjl1wVC9hwkEh6SUeWdAr2qfPEdURg03RrD9XJsFM25"
 
-def send_message():
-    msg = entry.get().strip()
-    if not msg: return
-    chat.config(state=tk.NORMAL)
-    chat.insert(tk.END, f"You: {msg}\n\n", "user")
-    chat.see(tk.END)
-    entry.delete(0, tk.END)
-    
-    def get_reply():
-        try:
-            r = requests.post("https://api.x.ai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
-                json={"model": "grok-4", "messages": [{"role":"system","content":"You are Grok. Be fun, helpful and game-focused."},{"role":"user","content":msg}],"temperature":0.8}, timeout=30)
-            reply = r.json()['choices'][0]['message']['content']
-            chat.insert(tk.END, f"Grok: {reply}\n\n", "grok")
-        except:
-            chat.insert(tk.END, "Grok: Connection error...\n\n", "grok")
-        chat.see(tk.END)
-        chat.config(state=tk.DISABLED)
-    
-    threading.Thread(target=get_reply, daemon=True).start()
+print(f"[{datetime.now().strftime('%H:%M:%S')}] Grok is now ACTIVE")
 
-root = tk.Tk()
-root.title("Grok Chat")
-root.geometry("720x620")
-root.attributes("-topmost", True)
+def take_screenshot():
+    path = os.path.expanduser(f"~/grok/shot_{int(time.time())}.png")
+    ImageGrab.grab().save(path)
+    return path
 
-chat = scrolledtext.ScrolledText(root, wrap=tk.WORD, state=tk.DISABLED)
-chat.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-chat.tag_config("user", foreground="cyan")
-chat.tag_config("grok", foreground="lime")
+def image_to_base64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
-entry = tk.Entry(root, font=("Arial", 12))
-entry.pack(fill=tk.X, padx=10, pady=5)
-entry.bind("<Return>", lambda e: send_message())
+def send_to_grok(image_path):
+    prompt = "You are Grok. Analyze the screenshot and tell the player what game this is, where they are, and give clear helpful advice (tips, next steps, boss strategy, secrets)."
+    try:
+        r = requests.post(
+            "https://api.x.ai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {API_KEY}"},
+            json={"model": "grok-2-vision-latest", "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_to_base64(image_path)}"}}]}], "max_tokens": 700},
+            timeout=30)
+        return r.json()["choices"][0]["message"]["content"] if r.status_code == 200 else "API Error"
+    except:
+        return "Could not connect to Grok. Check internet."
 
-tk.Button(root, text="Send", command=send_message).pack(pady=5)
-tk.Label(root, text="Close this window to return to Batocera").pack()
+def show_overlay(text):
+    root = tk.Tk()
+    root.title("Grok")
+    root.attributes("-alpha", 0.94)
+    root.attributes("-topmost", True)
+    root.geometry("880x680+1000+80")
+    root.configure(bg="#0a0a0f")
+    tk.Label(root, text="GROK", font=("Consolas", 28, "bold"), fg="#00ffaa", bg="#0a0a0f").pack(pady=15)
+    tk.Label(root, text="Powered by xAI", font=("Consolas", 11), fg="#00cc88", bg="#0a0a0f").pack()
+    txt = scrolledtext.ScrolledText(root, bg="#111118", fg="#00ffaa", font=("Consolas", 12), wrap=tk.WORD)
+    txt.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+    txt.insert(tk.END, text)
+    tk.Button(root, text="CLOSE (ESC)", command=root.destroy, bg="#c22", fg="white", font=("Consolas", 11), height=2).pack(pady=12)
+    root.bind("<Escape>", lambda e: root.destroy())
+    root.mainloop()
 
-root.mainloop()
-PY
+def on_hotkey():
+    print("→ Screenshot captured → Asking Grok...")
+    img = take_screenshot()
+    answer = send_to_grok(img)
+    show_overlay(answer)
 
-echo "Grok installed! Launch it from Ports."
-echo "Next step: We will add hotkey + overlay."
+def controller_listener():
+    try:
+        pygame.init()
+        pygame.joystick.init()
+        if pygame.joystick.get_count() > 0:
+            joy = pygame.joystick.Joystick(0)
+            joy.init()
+            print(f"Controller ready: {joy.get_name()} → Press NORTH button (Y/△)")
+            while True:
+                pygame.event.pump()
+                for event in pygame.event.get():
+                    if event.type == pygame.JOYBUTTONDOWN and event.button == 3:
+                        on_hotkey()
+                time.sleep(0.05)
+        else:
+            print("No controller detected")
+    except:
+        print("Controller support not available")
+
+threading.Thread(target=controller_listener, daemon=True).start()
+
+print("\033[1;32mGrok is running!\033[0m")
+print("Press the NORTH button (Y / △) on your controller")
+print("or Ctrl+Alt+M on keyboard")
+input("Press Enter to keep Grok running...\n")
 EOF
 
-chmod +x /userdata/roms/ports/Grok/Grok.sh
-echo "Installation complete!"
+chmod +x grok.py
+
+cat > run-grok.sh << 'EOF'
+#!/bin/bash
+cd ~/grok
+python3 grok.py
+EOF
+chmod +x run-grok.sh
+
+echo "✅ Grok is ready!"
+echo "Launching now..."
+./run-grok.sh
