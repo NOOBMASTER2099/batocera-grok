@@ -1,42 +1,25 @@
 #!/bin/bash
 # ===============================================
-#   M.A.S.O.N. — v2.2 ONE-BUTTON INSTALLER
-#   Grok Powered • North Button Ready
-#   Auto-installs everything possible on Batocera
+#   M.A.S.O.N. v2.3 — Clean & Simple Version
+#   Grok Powered • North Button (Y/△) Ready
 # ===============================================
 
+clear
 echo -e "\033[1;36m"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║                M.A.S.O.N. v2.2 ONE-BUTTON INSTALLER          ║"
-echo "║        Grok Powered • Controller North Button (Y/△)          ║"
+echo "║                   M.A.S.O.N. v2.3                            ║"
+echo "║           Grok Powered • One-Button Launch                   ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "\033[0m"
 
-echo "→ Updating package list..."
-pacman -Sy --noconfirm || echo "→ Network slow, continuing anyway..."
+echo "→ Installing required Python libraries..."
+python3 -m pip install --break-system-packages --quiet --upgrade pillow requests opencv-python-headless pygame
 
-echo "→ Installing system packages (trying all possible names)..."
-pacman -S --noconfirm python3 python3-pip tk python3-tkinter scrot xclip pygame 2>/dev/null || echo "→ Some packages not found (normal on Batocera) — continuing..."
-
-echo "→ Installing Python libraries via pip..."
-python3 -m pip install --break-system-packages --quiet --upgrade pillow requests keyboard pyautogui opencv-python-headless pygame
-
-echo "→ Creating M.A.S.O.N. folder..."
+echo "→ Setting up M.A.S.O.N...."
 mkdir -p ~/mason
 cd ~/mason
 
-echo "→ Generating icon..."
-python3 -c '
-from PIL import Image, ImageDraw
-img = Image.new("RGB", (256, 256), "#0a0a0f")
-draw = ImageDraw.Draw(img)
-draw.ellipse((32,32,224,224), fill="#1a1a2e", outline="#00ffaa", width=18)
-draw.text((85, 65), "M", fill="#00ffaa")
-img.save("icon.png")
-print("✓ Icon created")
-' 2>/dev/null || echo "✓ Icon created"
-
-# ==================== MAIN M.A.S.O.N. SCRIPT ====================
+# Create the main program
 cat > mason.py << 'EOF'
 #!/usr/bin/env python3
 import time, os, base64, requests, tkinter as tk, threading, pygame
@@ -46,11 +29,7 @@ from tkinter import scrolledtext
 
 API_KEY = "xai-UCcQcKtlvC4TaXxqotml48cW8x9osoSIYPTJcFjl1wVC9hwkEh6SUeWdAr2qfPEdURg03RrD9XJsFM25"
 
-print(f"[{datetime.now().strftime('%H:%M:%S')}] M.A.S.O.N. v2.2 (Grok Powered) starting...")
-
-LEGAL_NOTICE = """M.A.S.O.N. is Grok Powered.
-Unofficial community tool • Not affiliated with xAI
-Use at your own risk."""
+print(f"[{datetime.now().strftime('%H:%M:%S')}] M.A.S.O.N. v2.3 is starting...")
 
 def take_screenshot():
     path = os.path.expanduser(f"~/mason/shot_{int(time.time())}.png")
@@ -87,7 +66,7 @@ def show_overlay(text):
 
     txt = scrolledtext.ScrolledText(root, bg="#111118", fg="#00ffaa", font=("Consolas", 12), wrap=tk.WORD)
     txt.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-    txt.insert(tk.END, text + "\n\n" + LEGAL_NOTICE)
+    txt.insert(tk.END, text + "\n\nM.A.S.O.N. is Grok Powered.\nUnofficial tool • Use at your own risk.")
 
     tk.Button(root, text="CLOSE (ESC)", command=root.destroy, bg="#c22", fg="white", font=("Consolas", 11), height=2).pack(pady=12)
     root.bind("<Escape>", lambda e: root.destroy())
@@ -101,48 +80,44 @@ def on_hotkey():
         f.write(f"[{datetime.now()}] New Analysis\n{answer}\n\n")
     show_overlay(answer)
 
-# Controller + Keyboard fallback
-def listener():
+# Controller listener (North button = button 3)
+def controller_listener():
     try:
         pygame.init()
         pygame.joystick.init()
         if pygame.joystick.get_count() > 0:
             joy = pygame.joystick.Joystick(0)
             joy.init()
-            print(f"✅ Controller ready: {joy.get_name()} → Press North button (Y/△)")
+            print(f"✅ Controller detected: {joy.get_name()} → North button (Y/△) ready!")
             while True:
                 pygame.event.pump()
                 for event in pygame.event.get():
-                    if event.type == pygame.JOYBUTTONDOWN and event.button == 3:  # North = Y / △
+                    if event.type == pygame.JOYBUTTONDOWN and event.button == 3:
                         on_hotkey()
                 time.sleep(0.05)
         else:
-            print("No controller detected → Using keyboard fallback (Ctrl+Alt+M)")
+            print("No controller found → Ctrl+Alt+M still works")
     except:
-        print("Controller support not available → Using keyboard fallback (Ctrl+Alt+M)")
+        print("Controller support unavailable → Use Ctrl+Alt+M")
 
-threading.Thread(target=listener, daemon=True).start()
+threading.Thread(target=controller_listener, daemon=True).start()
 
-print("\033[1;32mM.A.S.O.N. is running!\033[0m")
-print("Hotkey = North button (Y / △) on controller")
-print("         or Ctrl + Alt + M on keyboard")
-input("Press Enter to keep running (close terminal to stop)...\n")
+print("\033[1;32mM.A.S.O.N. is now running!\033[0m")
+print("Press the NORTH button (Y / △) on your controller")
+print("or Ctrl + Alt + M on keyboard")
+input("Press Enter to keep it running...\n")
 EOF
 
 chmod +x mason.py
 
+echo "✅ M.A.S.O.N. is ready!"
+echo "You can now launch it from Ports menu or by typing:"
+echo "~/mason/run-mason.sh"
+echo ""
+# Create run script
 cat > run-mason.sh << 'EOF'
 #!/bin/bash
 cd ~/mason
 python3 mason.py
 EOF
 chmod +x run-mason.sh
-
-echo -e "\033[1;32m✅ ONE-BUTTON INSTALL COMPLETE!"
-echo ""
-echo "Just run this to start M.A.S.O.N.:"
-echo "   ~/mason/run-mason.sh"
-echo ""
-echo "Plug in your controller first, then run the command above."
-echo "It will auto-detect the North button (Y/△)."
-echo -e "\033[0m"
