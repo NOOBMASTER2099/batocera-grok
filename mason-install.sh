@@ -1,30 +1,31 @@
 #!/bin/bash
 # ===============================================
-#   M.A.S.O.N. — All-in-One Installer v1.6
+#   M.A.S.O.N. — Batocera Edition v1.7
 #   Grok Powered In-Game Vision Assistant
-#   No sudo - Batocera Compatible
 # ===============================================
 
 echo -e "\033[1;36m"
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║                                                              ║"
-echo "║                   🚀  M.A.S.O.N. v1.6 Installer             ║"
+echo "║                   🚀  M.A.S.O.N. v1.7 Installer             ║"
 echo "║     Mobile Assistant for Screen Observation & Navigation     ║"
 echo "║                    Grok Powered                              ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "\033[0m"
 
+echo -e "\033[1;33m→ Updating packages (Batocera / pacman)...\033[0m"
+pacman -Sy --noconfirm
+
 echo -e "\033[1;33m→ Installing dependencies...\033[0m"
-apt update -qq
-apt install -y python3 python3-pip python3-tk scrot xclip
+pacman -S --noconfirm python python-pip tk scrot xclip
 
 echo -e "\033[1;33m→ Creating M.A.S.O.N. folder...\033[0m"
 mkdir -p ~/mason/icons
 cd ~/mason
 
 echo -e "\033[1;33m→ Installing Python packages...\033[0m"
-pip3 install --upgrade pip
-pip3 install pillow requests keyboard pyautogui opencv-python-headless
+pip install --upgrade pip
+pip install pillow requests keyboard pyautogui opencv-python-headless
 
 echo -e "\033[1;33m→ Generating M.A.S.O.N. icon...\033[0m"
 python3 - << 'PYCODE'
@@ -45,7 +46,7 @@ img.save("icons/mason_icon.png")
 print("✓ Icon created")
 PYCODE
 
-# ==================== MAIN SCRIPT ====================
+# ==================== MAIN M.A.S.O.N. SCRIPT ====================
 cat > mason.py << 'EOF'
 #!/usr/bin/env python3
 import time, os, base64, requests, tkinter as tk
@@ -62,7 +63,7 @@ SAVE_LOG = os.path.expanduser("~/mason/mason_log.txt")
 
 os.makedirs(os.path.dirname(SAVE_LOG), exist_ok=True)
 
-print(f"[{datetime.now().strftime('%H:%M:%S')}] M.A.S.O.N. v1.6 (Grok Powered) is active | Hotkey: {HOTKEY}")
+print(f"[{datetime.now().strftime('%H:%M:%S')}] M.A.S.O.N. v1.7 (Grok Powered) is active | Hotkey: {HOTKEY}")
 
 LEGAL_NOTICE = """M.A.S.O.N. is Grok Powered.
 This is an unofficial community tool.
@@ -81,7 +82,7 @@ def image_to_base64(path):
 
 def send_to_grok(image_path):
     base64_img = image_to_base64(image_path)
-    prompt = "You are M.A.S.O.N., a real-time in-game AI assistant powered by Grok. Analyze the screenshot and give helpful advice: game name, current area, tips, next steps, boss strategy, secrets."
+    prompt = "You are M.A.S.O.N., a real-time in-game AI assistant powered by Grok. Analyze the screenshot: identify the game, current area, and give useful tips, next steps, boss strategy or secrets."
 
     try:
         r = requests.post(
@@ -95,7 +96,7 @@ def send_to_grok(image_path):
                 ]}],
                 "max_tokens": 800
             },
-            timeout=25
+            timeout=30
         )
         return r.json()["choices"][0]["message"]["content"] if r.status_code == 200 else f"API Error {r.status_code}"
     except Exception as e:
@@ -133,8 +134,8 @@ def on_hotkey():
     show_overlay(answer)
 
 keyboard.add_hotkey(HOTKEY, on_hotkey)
-print("\033[1;32mM.A.S.O.N. (Grok Powered) is running!\033[0m")
-print("Press Ctrl+Alt+M in game.")
+print("\033[1;32mM.A.S.O.N. (Grok Powered) is now running!\033[0m")
+print("Press Ctrl+Alt+M while playing.")
 keyboard.wait()
 EOF
 
@@ -147,22 +148,12 @@ python3 mason.py
 EOF
 chmod +x run-mason.sh
 
-cat > ~/.local/share/applications/mason.desktop << EOF
-[Desktop Entry]
-Name=M.A.S.O.N.
-Comment=Grok Powered In-Game Assistant
-Exec=$HOME/mason/run-mason.sh
-Icon=$HOME/mason/icon.png
-Terminal=true
-Type=Application
-Categories=Game;Utility;
-EOF
-
 echo -e "\033[1;32m"
-echo "✅ Installation Complete! No sudo used."
+echo "✅ M.A.S.O.N. installed for Batocera!"
 echo ""
-echo "1. nano ~/mason/mason.py     ← Put your API key"
-echo "2. ~/mason/run-mason.sh      ← Start it"
+echo "Next steps:"
+echo "1. nano ~/mason/mason.py          ← Add your xAI API key"
+echo "2. ~/mason/run-mason.sh           ← Start M.A.S.O.N."
 echo ""
 echo "Hotkey: Ctrl + Alt + M"
 echo -e "\033[0m"
