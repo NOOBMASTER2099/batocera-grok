@@ -1,25 +1,24 @@
 #!/bin/bash
 # ===============================================
-#   M.A.S.O.N. — Ultimate One-File Installer v1.9
-#   Grok Powered In-Game Vision Assistant
-#   Your API key is already inside
+#   M.A.S.O.N. — v2.0 Controller Edition
+#   Grok Powered • North Button (Y/△) Hotkey
 # ===============================================
 
 echo -e "\033[1;36m"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║                   M.A.S.O.N. v1.9 Installer                  ║"
-echo "║           Grok Powered • One File Does Everything            ║"
+echo "║                   M.A.S.O.N. v2.0 Installer                  ║"
+echo "║     Grok Powered • Controller North Button Ready             ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "\033[0m"
 
 echo "→ Updating packages..."
-pacman -Sy --noconfirm || echo "Network slow - continuing anyway..."
+pacman -Sy --noconfirm || echo "Network slow - continuing..."
 
-echo "→ Installing required packages..."
-pacman -S --noconfirm python python-pip tk scrot xclip
+echo "→ Installing required packages (including pygame for controller)..."
+pacman -S --noconfirm python python-pip tk scrot xclip pygame
 
-echo "→ Installing Python libraries..."
-pip install --break-system-packages --quiet pillow requests keyboard pyautogui opencv-python-headless
+echo "→ Installing extra Python libraries..."
+pip install --break-system-packages --quiet pillow requests opencv-python-headless
 
 echo "→ Creating M.A.S.O.N. folder..."
 mkdir -p ~/mason
@@ -36,22 +35,25 @@ img.save("icon.png")
 print("✓ Icon created")
 ' 2>/dev/null || echo "✓ Icon created"
 
-# ==================== MAIN M.A.S.O.N. SCRIPT ====================
+# ==================== MAIN SCRIPT (Controller North Button) ====================
 cat > mason.py << 'EOF'
 #!/usr/bin/env python3
-import time, os, base64, requests, tkinter as tk, keyboard
+import time, os, base64, requests, tkinter as tk
 from datetime import datetime
 from PIL import ImageGrab
 from tkinter import scrolledtext
+import pygame
+import threading
 
-# ====================== YOUR API KEY (already set) ======================
+# ====================== YOUR API KEY ======================
 API_KEY = "xai-UCcQcKtlvC4TaXxqotml48cW8x9osoSIYPTJcFjl1wVC9hwkEh6SUeWdAr2qfPEdURg03RrD9XJsFM25"
-# ========================================================================
+# ========================================================
 
-HOTKEY = "ctrl+alt+m"
+HOTKEY_DESCRIPTION = "North Button (Y / △)"
 SAVE_LOG = os.path.expanduser("~/mason/mason_log.txt")
 
-print(f"[{datetime.now().strftime('%H:%M:%S')}] M.A.S.O.N. v1.9 (Grok Powered) is active | Hotkey: {HOTKEY}")
+print(f"[{datetime.now().strftime('%H:%M:%S')}] M.A.S.O.N. v2.0 (Grok Powered) is active")
+print(f"   Controller Hotkey → {HOTKEY_DESCRIPTION}")
 
 LEGAL_NOTICE = """M.A.S.O.N. is Grok Powered.
 Unofficial community tool • Not affiliated with xAI
@@ -99,18 +101,40 @@ def show_overlay(text):
     root.mainloop()
 
 def on_hotkey():
-    print("→ Screenshot captured...")
+    print("→ Screenshot captured → Sending to Grok...")
     img = take_screenshot()
-    print("→ Sending to Grok...")
     answer = send_to_grok(img)
     with open(SAVE_LOG, "a") as f:
         f.write(f"[{datetime.now()}] New Analysis\n{answer}\n\n")
     show_overlay(answer)
 
-keyboard.add_hotkey(HOTKEY, on_hotkey)
+# ==================== CONTROLLER LISTENER ====================
+def controller_listener():
+    pygame.init()
+    pygame.joystick.init()
+    
+    if pygame.joystick.get_count() == 0:
+        print("No controller detected. Plug one in and restart M.A.S.O.N.")
+        return
+
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+    print(f"Controller connected: {joystick.get_name()}")
+
+    while True:
+        pygame.event.pump()
+        for event in pygame.event.get():
+            if event.type == pygame.JOYBUTTONDOWN:
+                if event.button == 3:          # North button = Y / △ (button 3 on most controllers)
+                    on_hotkey()
+        time.sleep(0.05)   # small delay so we don't hammer the CPU
+
+# Start controller listener in background
+threading.Thread(target=controller_listener, daemon=True).start()
+
 print("\033[1;32mM.A.S.O.N. is now running!\033[0m")
-print("Press Ctrl + Alt + M in any game.")
-keyboard.wait()
+print("Press the NORTH button (Y / △) on your controller in any game.")
+input("Press Enter to keep running (or close this terminal)...\n")
 EOF
 
 chmod +x mason.py
@@ -122,10 +146,10 @@ python3 mason.py
 EOF
 chmod +x run-mason.sh
 
-echo -e "\033[1;32m✅ Installation Complete! Your API key is already inside."
+echo -e "\033[1;32m✅ Installation Complete!"
 echo ""
-echo "Just run this command to start M.A.S.O.N.:"
+echo "To start M.A.S.O.N. with controller support:"
 echo "   ~/mason/run-mason.sh"
 echo ""
-echo "Hotkey: Ctrl + Alt + M"
+echo "Hotkey = North button (Y / △) on your controller"
 echo -e "\033[0m"
