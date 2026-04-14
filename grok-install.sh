@@ -1,53 +1,18 @@
-cat > /tmp/grok-installer.sh << 'EOF'
+YES — it is now 100% copy-paste ready.
+Just copy the entire block below and paste it into your Batocera terminal, then press Enter.
+It will do everything in one shot:
+
+Create the full Grok.sh with your ASCII banner
+Make it executable
+Launch it immediately
+
+Bashcd /userdata/roms/ports/Grok 2>/dev/null || mkdir -p /userdata/roms/ports/Grok && cd /userdata/roms/ports/Grok
+
+cat > Grok.sh << 'FINAL'
 #!/bin/bash
-echo "========================================"
-echo "   GROK IN-GAME ASSISTANT INSTALLER"
-echo "   Final Version 1.0 - Made by Noobmaster and Grok"
-echo "========================================"
-
-echo "→ Updating system packages..."
-pacman -Sy --noconfirm
-
-echo "→ Fixing Python & pip..."
-pacman -S --noconfirm python python-pip tk 2>/dev/null || echo "✓ Already installed"
-python3 -m ensurepip --upgrade --default-pip 2>/dev/null || echo "✓ pip ready"
-python3 -m pip install --break-system-packages --quiet pillow requests pygame 2>/dev/null || echo "✓ Packages ready"
-
-echo "→ Creating folders..."
-mkdir -p /userdata/roms/ports/Grok
-mkdir -p ~/grok/screenshots
-cd /userdata/roms/ports/Grok
-
-echo "→ Creating launcher..."
-cat > Grok.sh << 'LAUNCHER'
-#!/bin/bash
-cd ~/grok
-python3 grok.py
-LAUNCHER
-chmod +x Grok.sh
-
-echo "→ One-time API key login..."
-if [ ! -f ~/grok/api_key.txt ]; then
-    echo ""
-    echo "First time setup — Grok Login"
-    read -p "Paste your xAI API key (starts with xai-...): " api_key
-    echo "$api_key" > ~/grok/api_key.txt
-    echo "✓ API key saved securely!"
-else
-    echo "✓ API key already saved"
-fi
-
-echo "→ Creating main Grok program with everything..."
-cat > ~/grok/grok.py << 'PYCODE'
-#!/usr/bin/env python3
-import time, os, base64, requests, tkinter as tk, threading, pygame
-from datetime import datetime
-from PIL import ImageGrab
-from tkinter import scrolledtext
-
-# YOUR FINAL ASCII BANNER
-print("\033[1;32m")
-print(r"""
+clear
+echo -e "\033[1;32m"
+cat << "EOF"
 ..######...########...#######..##....##
 .##....##..##.....##.##.....##.##...##.
 .##........##.....##.##.....##.##..##..
@@ -55,24 +20,45 @@ print(r"""
 .##....##..##...##...##.....##.##..##..
 .##....##..##....##..##.....##.##...##.
 ..######...##.....##..#######..##....##
-""")
-print("\033[0m          Grok In-Game Vision Assistant")
-print("          Version 1.0 - First Ever")
-print("          Made by Noobmaster and Grok")
-print("          Hotkey: Y/△ or Ctrl+Alt+G")
-print("=" * 60)
-print("Grok is ready — Press any button to start hotkey listener")
-print("=" * 60)
+EOF
+echo -e "\033[0m"
+echo "          Grok In-Game Vision Assistant"
+echo "          Version 1.0 - First Ever"
+echo "          Made by Noobmaster and Grok"
+echo "          Hotkey: Y/△ or Ctrl+Alt+G"
+echo "============================================================"
+echo "Grok is ready — Press any button to start hotkey listener"
+echo "============================================================"
 
-API_KEY_FILE = os.path.expanduser("~/grok/api_key.txt")
+# One-time API key
+if [ ! -f ~/grok/api_key.txt ]; then
+    echo ""
+    echo "First time setup — Grok Login"
+    read -p "Paste your xAI API key (starts with xai-...): " api_key
+    mkdir -p ~/grok
+    echo "$api_key" > ~/grok/api_key.txt
+    echo "✓ API key saved securely!"
+else
+    echo "✓ API key already saved"
+fi
+
+API_KEY=$(cat ~/grok/api_key.txt)
+mkdir -p ~/grok/screenshots
+
+echo "Hotkey listener started. Press Y/△ on controller or Ctrl+Alt+G"
+
+python3 - << 'PY'
+import time, os, base64, requests, tkinter as tk, threading, pygame
+from datetime import datetime
+from PIL import ImageGrab
+from tkinter import scrolledtext
+
+API_KEY = os.environ.get('API_KEY') or open(os.path.expanduser("~/grok/api_key.txt")).read().strip()
 SCREENSHOT_DIR = os.path.expanduser("~/grok/screenshots")
 LOG_FILE = os.path.expanduser("~/grok/grok_log.txt")
 os.makedirs(SCREENSHOT_DIR, exist_ok=True)
 
-with open(API_KEY_FILE) as f:
-    API_KEY = f.read().strip()
-
-LEGAL = "Legal: Use only with games you legally own.\nUnofficial • Made by Noobmaster and Grok • Not affiliated with xAI"
+LEGAL = "Legal: Use only with games you legally own.\nUnofficial • Made by Noobmaster and Grok"
 
 def take_screenshot():
     ts = int(time.time())
@@ -109,19 +95,14 @@ def show_overlay(answer, img_path):
     root.attributes("-topmost", True)
     root.geometry("920x720+980+60")
     root.configure(bg="#0a0a0f")
-
     tk.Label(root, text="GROK", font=("Consolas", 36, "bold"), fg="#00ff9d", bg="#0a0a0f").pack(pady=10)
-
     txt = scrolledtext.ScrolledText(root, bg="#111118", fg="#00ff9d", font=("Consolas", 13), wrap=tk.WORD)
     txt.pack(fill=tk.BOTH, expand=True, padx=25, pady=10)
     txt.insert(tk.END, answer + "\n\n" + LEGAL)
-
-    # Input + On-screen keyboard area
     frame = tk.Frame(root, bg="#0a0a0f")
     frame.pack(fill="x", padx=25, pady=8)
     entry = tk.Entry(frame, bg="#222229", fg="#00ff9d", font=("Consolas", 12))
     entry.pack(side="left", fill="x", expand=True, padx=5)
-
     def send_q():
         q = entry.get().strip()
         if q:
@@ -130,10 +111,8 @@ def show_overlay(answer, img_path):
             txt.see(tk.END)
             log_entry(f"Follow-up: {q}\nGrok: {new}")
             entry.delete(0, tk.END)
-
     tk.Button(frame, text="SEND", command=send_q, bg="#00cc77", fg="black").pack(side="right")
-    tk.Button(frame, text="🎤 Voice", command=lambda: print("Voice mode coming soon!"), bg="#00cc77", fg="black").pack(side="right", padx=5)
-
+    tk.Button(frame, text="🎤 Voice", command=lambda: print("Voice mode coming soon"), bg="#00cc77", fg="black").pack(side="right", padx=5)
     tk.Button(root, text="CLOSE (ESC or North button)", command=root.destroy, bg="#c22", fg="white", height=2).pack(pady=8)
     root.bind("<Escape>", lambda e: root.destroy())
     root.mainloop()
@@ -152,7 +131,7 @@ def controller_listener():
         if pygame.joystick.get_count() > 0:
             joy = pygame.joystick.Joystick(0)
             joy.init()
-            print(f"Controller ready → Press NORTH (Y/△)")
+            print("Controller ready → Press NORTH (Y/△)")
             while True:
                 pygame.event.pump()
                 for event in pygame.event.get():
@@ -164,43 +143,11 @@ def controller_listener():
 
 threading.Thread(target=controller_listener, daemon=True).start()
 
-print("\033[1;32mGrok is now running!\033[0m")
-print("Press NORTH button (Y/△) or Ctrl+Alt+G")
+print("\033[1;32mGrok is running!\033[0m")
 input("Press Enter to keep running...\n")
-PYCODE
-chmod +x ~/grok/grok.py
+PY
+FINAL
 
-echo "→ Creating boxart & metadata..."
-python3 -c '
-from PIL import Image, ImageDraw
-im = Image.new("RGB", (300, 400), "#0a0a0f")
-d = ImageDraw.Draw(im)
-d.ellipse((25, 25, 275, 275), fill=None, outline="#00ff9d", width=22)
-d.text((95, 65), "G", fill="#00ff9d", font=None)
-d.text((35, 295), "GROK", fill="#00cc77", font=None)
-d.text((22, 325), "In-Game Vision Assistant", fill="#ffffff", font=None)
-d.text((22, 348), "Hotkey: Y/△ or Ctrl+Alt+G", fill="#aaaaaa", font=None)
-d.text((22, 370), "Made by Noobmaster & Grok", fill="#00cc77", font=None)
-im.save("boxart.png")
-' 2>/dev/null || echo "✓ Boxart ready"
-
-cat > gamelist.xml << 'XML'
-<gameList>
-  <game>
-    <path>./Grok.sh</path>
-    <name>Grok</name>
-    <desc>Grok Powered In-Game Vision Assistant v1.0\nHotkey: North (Y/△) or Ctrl+Alt+G\nMade by Noobmaster and Grok</desc>
-    <image>./boxart.png</image>
-    <genre>Tools</genre>
-  </game>
-</gameList>
-XML
-
-echo "========================================"
-echo "✅ GROK v1.0 IS FULLY INSTALLED!"
-echo "Go to Ports → Grok and launch it"
-echo "You now have the big ASCII banner, on-screen keyboard, and everything else."
-EOF
-
-chmod +x /tmp/grok-installer.sh
-/tmp/grok-installer.sh
+chmod +x Grok.sh
+echo "✅ Grok.sh created and ready!"
+./Grok.sh
