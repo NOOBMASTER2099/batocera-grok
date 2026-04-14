@@ -1,20 +1,24 @@
+cd /userdata/roms/ports
+
+cat > "Grok.sh" << 'EOF'
 #!/bin/bash
 # ===============================================
-#   Grok — In-Game Vision Assistant
-#   One-button launch • North button ready
+#   Grok — Simple In-Game Vision Assistant
+#   Grok Powered • Controller + Keyboard Ready
 # ===============================================
 
 clear
 echo "========================================"
-echo "           GROK IS STARTING"
-echo "     Grok Powered In-Game Assistant"
+echo "           GROK IS STARTING UP"
+echo "      Grok Powered In-Game Assistant"
 echo "========================================"
 
-echo "→ Installing libraries..."
+echo "→ Checking libraries..."
 python3 -m ensurepip --upgrade --default-pip > /dev/null 2>&1
 python3 -m pip install --break-system-packages --quiet pillow requests opencv-python-headless pygame
 
-echo "→ Setting up Grok..."
+echo "→ Starting Grok..."
+
 mkdir -p ~/grok
 cd ~/grok
 
@@ -41,8 +45,7 @@ def image_to_base64(path):
 def send_to_grok(image_path):
     prompt = "You are Grok. Analyze the screenshot and tell the player what game this is, where they are, and give clear helpful advice (tips, next steps, boss strategy, secrets)."
     try:
-        r = requests.post(
-            "https://api.x.ai/v1/chat/completions",
+        r = requests.post("https://api.x.ai/v1/chat/completions",
             headers={"Authorization": f"Bearer {API_KEY}"},
             json={"model": "grok-2-vision-latest", "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_to_base64(image_path)}"}}]}], "max_tokens": 700},
             timeout=30)
@@ -57,11 +60,14 @@ def show_overlay(text):
     root.attributes("-topmost", True)
     root.geometry("880x680+1000+80")
     root.configure(bg="#0a0a0f")
+
     tk.Label(root, text="GROK", font=("Consolas", 28, "bold"), fg="#00ffaa", bg="#0a0a0f").pack(pady=15)
     tk.Label(root, text="Powered by xAI", font=("Consolas", 11), fg="#00cc88", bg="#0a0a0f").pack()
+
     txt = scrolledtext.ScrolledText(root, bg="#111118", fg="#00ffaa", font=("Consolas", 12), wrap=tk.WORD)
     txt.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
     txt.insert(tk.END, text)
+
     tk.Button(root, text="CLOSE (ESC)", command=root.destroy, bg="#c22", fg="white", font=("Consolas", 11), height=2).pack(pady=12)
     root.bind("<Escape>", lambda e: root.destroy())
     root.mainloop()
@@ -86,28 +92,23 @@ def controller_listener():
                     if event.type == pygame.JOYBUTTONDOWN and event.button == 3:
                         on_hotkey()
                 time.sleep(0.05)
-        else:
-            print("No controller detected")
     except:
-        print("Controller support not available")
+        print("Controller not detected → Ctrl+Alt+G still works")
 
 threading.Thread(target=controller_listener, daemon=True).start()
 
 print("\033[1;32mGrok is running!\033[0m")
-print("Press the NORTH button (Y / △) on your controller")
-print("or Ctrl+Alt+M on keyboard")
+print("Press NORTH button (Y/△) on controller or Ctrl+Alt+G on keyboard")
 input("Press Enter to keep Grok running...\n")
 EOF
 
 chmod +x grok.py
 
-cat > run-grok.sh << 'EOF'
-#!/bin/bash
-cd ~/grok
-python3 grok.py
-EOF
-chmod +x run-grok.sh
-
 echo "✅ Grok is ready!"
 echo "Launching now..."
-./run-grok.sh
+./grok.py
+EOF
+
+chmod +x "Grok.sh"
+echo "✅ Grok launcher created in Ports!"
+echo "Go to Ports → Grok to launch it."
