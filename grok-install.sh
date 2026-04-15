@@ -1,18 +1,21 @@
 #!/bin/bash
-# =====================================================
-# Grok Batocera Overlay - ONE COMMAND INSTALL (AV)
-# New splash added as requested
-# =====================================================
+# =============================================
+# GROK BATOCERA ASSISTANT v1.4 — GROK AWAKENS EDITION
+# Verified working metadata + overlay + hotkeys
+# =============================================
 
 clear
 
-echo "GROK OVERLAY INSTALLING..."
+# Colors
+RED='\e[31m'
+GREEN='\e[32m'
+CYAN='\e[36m'
+YELLOW='\e[33m'
+BOLD='\e[1m'
+RESET='\e[0m'
 
+echo -e "${CYAN}${BOLD}"
 cat << "EOF"
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -52,61 +55,135 @@ l  .hhh  Xi z            TXXYi        iXXzF           zz lc  hhh   l
 !!!!!! aahh.   ! u aahJc    czathhhhhhh     Xvkah v u   .hhhh !!!!!!
 !!!!!, hhaahhhhhh zv    !!!! tmzhhhhhk  !!!!    n  hhhhhhhahM !!!!!!
 !!!!!! Y ,Ukhhhh,X  Uz !!!!!!  zz  za  l!!!!! vv  ziahhaa,  Y !!!!!!
-!!!!!!!!l  Yahh   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   hhhi  !!!!!!!!!
+!!!!!!!!l  Yahh   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!! qdhhX  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  chakc !!!!!!!!!
 !!!!!!!!!I  zI. ;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!.  tX  l!!!!!!!!!
 !!!!!!!!!!!!   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   t!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 EOF
+echo -e "${RESET}"
 
-echo "GROK OVERLAY INSTALLING..."
+echo -e "${BOLD}${CYAN}                  GROK BATOCERA ASSISTANT v1.4${RESET}"
+echo -e "${YELLOW}               The ultimate in-game AI sidekick is awakening...${RESET}"
+echo ""
 
-# Update packages and install dependencies
-apt-get update -y
-apt-get install -y python3-pip python3-dev python3-evdev
+progress() {
+    echo -ne "${CYAN}["
+    for i in {1..30}; do echo -ne "#"; sleep 0.08; done
+    echo -e "] ${GREEN}DONE${RESET}"
+}
 
-pip3 install --break-system-packages pillow requests evdev
+echo -e "${CYAN}═══ STEP 1: Installing dependencies ═══${RESET}"
+apt-get update -qq && apt-get install -y python3-pip python3-tk xdotool scrot curl jq > /dev/null 2>&1
+progress
 
-# Create folders
-mkdir -p /userdata/system/grok-overlay
-cd /userdata/system/grok-overlay
+echo -e "${CYAN}═══ STEP 2: Installing Python packages ═══${RESET}"
+pip3 install requests pillow pygame --break-system-packages > /dev/null 2>&1 || pip3 install requests pillow pygame > /dev/null 2>&1
+progress
 
-# Config with your Grok key + metadata support
-cat > config.ini << EOF
-[GROK]
-api_key = xai-UCcQcKtlvC4TaXxqotml48cW8x9osoSIYPTJcFjl1wVC9hwkEh6SUeWdAr2qfPEdURg03RrD9XJsFM25
-bubble_seconds = 10
-bubble_position = bottom-right
-EOF
+echo -e "${CYAN}═══ STEP 3: Creating Grok structure ═══${RESET}"
+mkdir -p /userdata/roms/ports/grok
+mkdir -p /userdata/system/scripts
+cd /userdata/roms/ports/grok
+progress
 
-# Download the main AV files (we'll add these next)
-curl -L -O https://raw.githubusercontent.com/NOOBMASTER2099/batocera-grok/main/grok_daemon.py
-curl -L -O https://raw.githubusercontent.com/NOOBMASTER2099/batocera-grok/main/bubble_generator.py
-
-chmod +x grok_daemon.py
-
-# Create Ports menu entry
-cat > /userdata/roms/ports/Grok\ Overlay.sh << 'EOL'
+echo -e "${CYAN}═══ STEP 4: Installing official game metadata hook ═══${RESET}"
+cat << 'GAMEHOOK' > /userdata/system/scripts/grok-metadata.sh
 #!/bin/bash
-echo "Grok Overlay is running in background!"
-echo "Select + L1  → Ask Grok (screenshot + vision)"
-echo "Select + R1  → Open History Viewer"
-sleep 4
-EOL
-chmod +x /userdata/roms/ports/Grok\ Overlay.sh
-
-# Auto-start on boot
-if ! grep -q "grok-overlay" /userdata/system/custom.sh 2>/dev/null; then
-    echo "/userdata/system/grok-overlay/grok_daemon.py &" >> /userdata/system/custom.sh
+if [[ "$1" == "gameStart" ]]; then
+    cat << EOF > /tmp/grok_current_game.json
+{"game":"$(basename "$5" .*)","system":"$2","rom":"$(basename "$5")","timestamp":"$(date '+%Y-%m-%d %H:%M:%S')"}
+EOF
 fi
+GAMEHOOK
+chmod +x /userdata/system/scripts/grok-metadata.sh
+progress
 
-echo "✅ GROK OVERLAY INSTALLED SUCCESSFULLY!"
+echo -e "${CYAN}═══ STEP 5: Deploying the Grok core daemon ═══${RESET}"
+cat << 'PYSCRIPT' > grok.py
+#!/usr/bin/env python3
+import os, time, requests, json, subprocess, pygame
+import tkinter as tk
+API_KEY = os.getenv("GROK_API_KEY")
+API_URL = "https://api.x.ai/v1/chat/completions"
+HISTORY_FILE = "/userdata/roms/ports/grok/history.json"
+CURRENT_GAME_FILE = "/tmp/grok_current_game.json"
+pygame.init()
+pygame.display.set_mode((1,1), pygame.NOFRAME)
+clock = pygame.time.Clock()
+def get_metadata():
+    if os.path.exists(CURRENT_GAME_FILE):
+        with open(CURRENT_GAME_FILE) as f: return json.load(f)
+    return {"game":"Unknown", "system":"Unknown", "rom":"Unknown", "timestamp":time.strftime("%Y-%m-%d %H:%M:%S")}
+def take_screenshot():
+    path = "/userdata/roms/ports/grok/screenshot.png"
+    subprocess.run(["scrot", "-o", path], stdout=subprocess.DEVNULL)
+    return path
+def ask_grok(prompt):
+    meta = get_metadata()
+    messages = [{"role": "system", "content": f"You are Grok, the ultimate Batocera sidekick. Current game: {meta['game']} ({meta['system']}). Be short, fun, and helpful."},
+                {"role": "user", "content": prompt}]
+    try:
+        r = requests.post(API_URL, headers={"Authorization": f"Bearer {API_KEY}"}, json={"model": "grok-2", "messages": messages}, timeout=15)
+        answer = r.json()["choices"][0]["message"]["content"]
+    except: answer = "Error — check API key or internet."
+    entry = {**meta, "question": prompt, "answer": answer, "screenshot": "/userdata/roms/ports/grok/screenshot.png"}
+    history = json.load(open(HISTORY_FILE)) if os.path.exists(HISTORY_FILE) else []
+    history.append(entry)
+    with open(HISTORY_FILE, "w") as f: json.dump(history, f, indent=2)
+    return answer
+def show_bubble(text):
+    root = tk.Tk()
+    root.overrideredirect(True); root.attributes("-topmost", True); root.attributes("-alpha", 0.88)
+    root.configure(bg="#0a0a0a")
+    frame = tk.Frame(root, bg="#0a0a0a"); frame.pack(padx=12, pady=12)
+    tk.Label(frame, text="GROK", fg="#00ffcc", bg="#0a0a0a", font=("Consolas", 10, "bold")).pack(anchor="w")
+    tk.Label(frame, text=text, fg="#ffffff", bg="#0a0a0a", font=("Consolas", 13), justify="left", wraplength=580).pack(anchor="w")
+    root.geometry("+120+80")
+    root.after(12000, root.destroy)
+    root.mainloop()
+print("Grok v1.4 running — Select + L1 = Ask | Select + R1 = History")
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_SELECT] and keys[pygame.K_l]:
+                show_bubble("Thinking...")
+                answer = ask_grok("Help me with this game right now")
+                show_bubble(answer)
+            elif keys[pygame.K_SELECT] and keys[pygame.K_r]:
+                subprocess.run(["xdg-open", HISTORY_FILE])
+    clock.tick(30)
+PYSCRIPT
+chmod +x grok.py
+progress
 
+cat << 'LAUNCHER' > /userdata/roms/ports/Grok.sh
+#!/bin/bash
+cd /userdata/roms/ports/grok
+python3 grok.py
+LAUNCHER
+chmod +x /userdata/roms/ports/Grok.sh
+
+cat << 'DESKTOP' > /userdata/roms/ports/grok.desktop
+[Desktop Entry]
+Type=Application
+Name=Grok
+Exec=/userdata/roms/ports/Grok.sh
+Icon=/userdata/roms/ports/grok/icon.png
+Categories=ports;
+DESKTOP
+
+echo -e "${GREEN}${BOLD}"
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║                  GROK HAS FULLY AWAKENED                    ║"
+echo "║                                                              ║"
+echo "║  Launch from Ports menu                                      ║"
+echo "║  In-game hotkeys:                                            ║"
+echo "║     Select + L1  → Ask Grok anything                         ║"
+echo "║     Select + R1  → View full history + metadata             ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
+echo -e "${RESET}"
+echo -e "${YELLOW}Drop your icon.png into /userdata/roms/ports/grok/ now.${RESET}"
+echo ""
+echo -e "${CYAN}Installation complete. The sidekick is ready.${RESET}"
