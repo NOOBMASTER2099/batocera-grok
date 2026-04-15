@@ -109,6 +109,4 @@ if ! grep -q "grok-overlay" /userdata/system/custom.sh 2>/dev/null; then
 fi
 
 echo "✅ GROK OVERLAY INSTALLED SUCCESSFULLY!"
-echo "Rebooting in 3 seconds..."
-sleep 3
-reboot
+
