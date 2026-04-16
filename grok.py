@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # =============================================
 # GROK BATOCERA ASSISTANT v1.5 - grok.py
-# Background daemon - Select+L1 = Chat, Select+R1 = Translation
+# Background daemon with working metadata
+# Select + L1 = Chat    |    Select + R1 = Translation
 # =============================================
 
 import os
@@ -45,7 +46,7 @@ def ask_grok(prompt, is_translation=False):
     screenshot_path = take_screenshot()
     
     if is_translation:
-        system_msg = f"You are Grok in Translation Mode. Translate the entire screen to English. Be accurate, concise, and natural."
+        system_msg = "You are Grok in Translation Mode. Translate the entire screen to English. Be accurate, concise, and natural."
     else:
         system_msg = f"You are Grok, the ultimate Batocera sidekick. Current game: {meta['game']} ({meta['system']}). Be short, fun, and helpful."
 
@@ -68,7 +69,7 @@ def ask_grok(prompt, is_translation=False):
         )
         answer = r.json()["choices"][0]["message"]["content"]
     except Exception:
-        answer = "Error contacting Grok. Check your API key or internet connection."
+        answer = "Error contacting Grok. Check your API key or internet."
 
     # Save to history with full metadata
     entry = {
@@ -91,18 +92,15 @@ def show_bubble(text, title="GROK"):
     root.attributes("-topmost", True)
     root.attributes("-alpha", 0.88)
     root.configure(bg="#0a0a0a")
-    
     frame = tk.Frame(root, bg="#0a0a0a")
     frame.pack(padx=15, pady=12)
-    
     tk.Label(frame, text=title, fg="#00ffcc", bg="#0a0a0a", font=("Consolas", 10, "bold")).pack(anchor="w")
     tk.Label(frame, text=text, fg="#ffffff", bg="#0a0a0a", font=("Consolas", 13), justify="left", wraplength=580).pack(anchor="w")
-    
     root.geometry("+120+80")
     root.after(12000, root.destroy)
     root.mainloop()
 
-print("Grok v1.5 is running in the background")
+print("Grok v1.5 running in background")
 print("Select + L1 → Full Chat")
 print("Select + R1 → Translation Mode")
 
@@ -110,15 +108,12 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             keys = pygame.key.get_pressed()
-            
             if keys[pygame.K_SELECT] and keys[pygame.K_l]:          # Select + L1
                 show_bubble("Thinking...", "GROK")
                 answer = ask_grok("Help me with this game right now")
                 show_bubble(answer, "GROK")
-            
             elif keys[pygame.K_SELECT] and keys[pygame.K_r]:        # Select + R1
-                show_bubble("Translating screen...", "TRANSLATION")
+                show_bubble("Translating...", "TRANSLATION")
                 answer = ask_grok("Translate this screen", is_translation=True)
                 show_bubble(answer, "TRANSLATION")
-    
     clock.tick(30)
