@@ -1,9 +1,7 @@
-✅ 100% READY — FINAL ONE-COMMAND INSTALL SCRIPT
-Copy everything below and replace the entire content of your grok-install.sh on GitHub.
-Bash#!/bin/bash
+#!/bin/bash
 # =============================================
 # GROK BATOCERA ASSISTANT v1.5 — FINAL ONE COMMAND
-# Your key is baked in • Auto background • 10-second reboot
+# New splash + metadata + background + 10-second reboot
 # =============================================
 
 clear
@@ -16,50 +14,40 @@ RESET='\e[0m'
 
 echo -e "${CYAN}${BOLD}"
 cat << "EOF"
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!l !!!!!!!!!! I!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!   am !!!!!!!! Jh   !!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!I  hhrah          hajha  i!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!, ,a   z h          a c   h; .!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!l .ak tX z;la        ht:z  f d;: !!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!  hh F    c.F hTafFhhh r.c zzlI ha  !!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!  ha         z z;      ;X X Fzzzzz  ha  !!!!!!!!!!!!!!
-!!!!!!!!!!!!   h  Xz Y      .    uu       vX zzzzz  hh  !!!!!!!!!!!!
-!!!!!!!!!!  l:L XTXz         c        n      zzzzzzz Qht  !!!!!!!!!!
-!!!!!!!!  khd zFXr                              zzXzcz ahd  !!!!!!!!
-!!!l,   hh  X z                                    zXz X .aa   .!!!!
-l  .hhh  Xi z            TXXYi        iXXzF           zz lc  hhh   l
-!!    ;              z;      nzzzzzzzccI     ;c           j  :    !!
-!!!!                   zXahahchhhhhhh.  ,hhhhl                  !!!!
-!!!!!!!               hhhhhCQhhkhhI  Fa hhhhha l             !!!!!!!
-!!!!!!!!!!!i       z.fk            hhhhhhL   Mh w       :!!!!!!!!!!!
-!!!!!!!  p   !!!!!               cIzhaz       Ld ;!!!!!   w. !!!!!!!
-!!!!!!. hhha: !!!!!              pp           h  !!!!! taLhh ;!!!!!!
-!!!!!!! Uhha. !!!!!         f z  hp.         oh  !!!!! Thha! !!!!!!!
-!!!t  F Lahhh    !  qhz z  vz tvo  ah .z   o hhh  ! !  hhhhd u  !!!!
-!!! hhhhhlthJa v f  hh haYXQh.hh    hhhhahhr.hhh     hhbkhhhhhaa !!!
-!!! LhQhvn  zw c Ta vrkU.  haaq      ahhh    dXh h z hqz. cuaQab !!!
-!!!!  z        nr ah       I .kQ hh zh  z       haz:r.       z  !!!!
-!!!!!!!!!!!!!! ; r. Xan !,  hLahhhhhhhY,  ,T.clc  c ci!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!  v    . Y  ohkhohh!hhhh  X      ; !!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!  a    odhhaha     a  !!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!     hh,Lkahlva aahIvhh.t   !!!!!!!!!!!!!!!!!!!!
-!!!!!!!l     !!    xhhhb  ckhaoI hh wchhha  aahhi    !!     !!!!!!!!
-!!!!!! aahh.   ! u aahJc    czathhhhhhh     Xvkah v u   .hhhh !!!!!!
-!!!!!, hhaahhhhhh zv    !!!! tmzhhhhhk  !!!!    n  hhhhhhhahM !!!!!!
-!!!!!! Y ,Ukhhhh,X  Uz !!!!!!  zz  za  l!!!!! vv  ziahhaa,  Y !!!!!!
-!!!!!!!!l  Yahh   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!! qdhhX  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  chakc !!!!!!!!!
-!!!!!!!!!I  zI. ;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!.  tX  l!!!!!!!!!
-!!!!!!!!!!!!   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   t!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+......................................................................
+......................................................................
+......................................................................
+......................................................................
+......................................................................
+.................-@@@@-..........+@@@@@@@@@+..........................
+...............#@+...@@@@.......@@:......=@@...............%@@@@:.....
+..............@@.:@@@@@@@@....%@@.......@@@@@@@@@@%%@@%..#@@**+%@@....
+..............@#@@@@@@@@@@..:@@-......-@@@@@@........%@@@@......@@....
+..............@@@@@@@@@@@@.*@@.......@@@@@@+..........%@@@.....@@@....
+...............@@@@@@@@@@.@@.......:@@@@@@............%@@@...+@@@@....
+....@@@@@@@@@@#..@@@@@@-+@@.......@@@@@@=.............%@@@..@@@.@@....
+...-@@.......#@@...@@..@@:......-@@@@@@.......*@......%@@@@@@:..@@....
+....@@@@.......@@*.@@.@@.......@@@@@@-.......@@@......%@@@@@....@@....
+.....@@@@.......@@-@@.:......-@@@@@@.......#@@@@......%@@@......@@:...
+......+@@@+......:=@@.......@@@@@@........@@@@@@......%@@@......@@....
+........@@@@.....@:@@.%@..=@@@@@@.......@@@@@@@@......%@@@......@@....
+.........%@@@:..*%@@@@@.%.@@@@@@@.....................%@@@......@@....
+..........=@@@@.=@@**%@@.@...@@@@.....................%@@@......@@....
+...........*@@@.@@@@@@@@#.%@@@@@@---------------------%@@@------@@....
+..........@@*.@@@#.....@@@@@@@@@@::::::@@@@@@@@@-:::--%@@@:::---@@....
+........*@@.....@@@@@@@@@@@@=-@@@......@@@@@@@@@......%@@@......@@....
+.......@@%-------@@@@@#----@@@@@@------@@%+++#@@------%@@@------@@....
+.....+@@+++++++%@@@@@+++++++%@@@@======@@:....@@+++=++@@@@=+++=+@@....
+....@@*==++==+@@@@#@@@#+=====-@@@======@@:....@@======@@@@======@@....
+..-@@@@@@@@@@@@@#...@@@@@@@@@@@@@@@@@@@@@:....@@@@@@@@@@@@@@@@@@@@....
+..=@@@@@@@@@@@@:.....@@@@@@@@@@@@@@@@@@@@.....%@@@@@@@@@@@@@@@@@@@....
+...:--------::........:---------------::.......:-----::..:------:.....
+......................................................................
+......................................................................
+......................................................................
+......................................................................
+......................................................................
+......................................................................
 EOF
 echo -e "${RESET}"
 
@@ -78,17 +66,17 @@ pacman -Sy --noconfirm > /dev/null 2>&1
 progress
 
 echo -e "${CYAN}═══ STEP 2: Installing tools ═══${RESET}"
-pacman -S --noconfirm python-pip python-tk xdotool scrot curl jq > /dev/null 2>&1
+pacman -S --noconfirm python-pip python-tk xdotool scrot curl jq feh > /dev/null 2>&1
 progress
 
 echo -e "${CYAN}═══ STEP 3: Installing Python packages ═══${RESET}"
 pip3 install requests pillow pygame --break-system-packages > /dev/null 2>&1
 progress
 
-echo -e "${CYAN}═══ STEP 4: Creating folders ═══${RESET}"
+echo -e "${CYAN}═══ STEP 4: Creating folders + icon ═══${RESET}"
 mkdir -p /userdata/roms/ports/grok
-mkdir -p /userdata/system/scripts
 cd /userdata/roms/ports/grok
+curl -o icon.png https://raw.githubusercontent.com/NOOBMASTER2099/batocera-grok/main/icon.png > /dev/null 2>&1
 progress
 
 echo -e "${CYAN}═══ STEP 5: Installing metadata hook (fixed) ═══${RESET}"
@@ -106,13 +94,14 @@ progress
 echo -e "${CYAN}═══ STEP 6: Deploying Grok daemon + auto background start ═══${RESET}"
 cat << 'PYSCRIPT' > grok.py
 #!/usr/bin/env python3
-import os, time, requests, json, subprocess, pygame
-import tkinter as tk
+import os, time, requests, json, subprocess, pygame, base64
+from PIL import Image, ImageDraw, ImageFont
 API_KEY = os.getenv("GROK_API_KEY")
 API_URL = "https://api.x.ai/v1/chat/completions"
 HISTORY_FILE = "/userdata/roms/ports/grok/history.json"
 CURRENT_GAME_FILE = "/tmp/grok_current_game.json"
 SCREENSHOT_PATH = "/userdata/roms/ports/grok/screenshot.png"
+BUBBLE_PATH = "/userdata/roms/ports/grok/bubble.png"
 pygame.init()
 pygame.display.set_mode((1,1), pygame.NOFRAME)
 clock = pygame.time.Clock()
@@ -123,6 +112,8 @@ def get_metadata():
 def take_screenshot():
     subprocess.run(["scrot", "-o", SCREENSHOT_PATH], stdout=subprocess.DEVNULL)
     return SCREENSHOT_PATH
+def encode_image_to_base64(path):
+    with open(path, "rb") as f: return base64.b64encode(f.read()).decode('utf-8')
 def ask_grok(prompt, is_translation=False):
     meta = get_metadata()
     screenshot_path = take_screenshot()
@@ -131,7 +122,7 @@ def ask_grok(prompt, is_translation=False):
         system_msg += " Translate the entire screen to English. Be accurate and concise."
     messages = [{"role": "system", "content": system_msg}, {"role": "user", "content": prompt}]
     try:
-        r = requests.post(API_URL, headers={"Authorization": f"Bearer {API_KEY}"}, json={"model": "grok-2", "messages": messages}, timeout=20)
+        r = requests.post(API_URL, headers={"Authorization": f"Bearer {API_KEY}"}, json={"model": "grok-2-vision", "messages": messages}, timeout=25)
         answer = r.json()["choices"][0]["message"]["content"]
     except:
         answer = "Error — check API key or internet."
@@ -141,18 +132,20 @@ def ask_grok(prompt, is_translation=False):
     with open(HISTORY_FILE, "w") as f: json.dump(history, f, indent=2)
     return answer
 def show_bubble(text, title="GROK"):
-    root = tk.Tk()
-    root.overrideredirect(True)
-    root.attributes("-topmost", True)
-    root.attributes("-alpha", 0.88)
-    root.configure(bg="#0a0a0a")
-    frame = tk.Frame(root, bg="#0a0a0a")
-    frame.pack(padx=12, pady=12)
-    tk.Label(frame, text=title, fg="#00ffcc", bg="#0a0a0a", font=("Consolas", 10, "bold")).pack(anchor="w")
-    tk.Label(frame, text=text, fg="#ffffff", bg="#0a0a0a", font=("Consolas", 13), justify="left", wraplength=580).pack(anchor="w")
-    root.geometry("+120+80")
-    root.after(12000, root.destroy)
-    root.mainloop()
+    img = Image.new('RGBA', (620, 180), (10, 10, 10, 230))
+    draw = ImageDraw.Draw(img)
+    try:
+        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 18)
+        font_text = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 22)
+    except:
+        font_title = ImageFont.load_default()
+        font_text = ImageFont.load_default()
+    draw.text((20, 15), title, fill="#00ffcc", font=font_title)
+    draw.text((20, 55), text, fill="#ffffff", font=font_text)
+    img.save(BUBBLE_PATH)
+    subprocess.run(["feh", "--title", "GROK", "-x", "-g", "620x180+100+600", "--zoom", "fill", "--no-title", BUBBLE_PATH], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    time.sleep(12)
+    subprocess.run(["pkill", "-f", "feh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 print("Grok v1.5 running in background")
 while True:
     for event in pygame.event.get():
@@ -170,9 +163,6 @@ while True:
 PYSCRIPT
 chmod +x grok.py
 progress
-
-# Add your key (already saved, but ensures it's there)
-echo 'export GROK_API_KEY="xai-UCcQcKtlvC4TaXxqotml48cW8x9osoSIYPTJcFjl1wVC9hwkEh6SUeWdAr2qfPEdURg03RrD9XJsFM25"' >> /userdata/system/custom.sh
 
 # Auto background start
 echo '/userdata/roms/ports/grok/grok.py &' >> /userdata/system/custom.sh
