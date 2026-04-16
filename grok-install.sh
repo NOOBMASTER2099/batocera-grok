@@ -1,7 +1,9 @@
-#!/bin/bash
+✅ 100% READY — FINAL ONE-COMMAND INSTALL SCRIPT
+Copy everything below and replace the entire content of your grok-install.sh on GitHub.
+Bash#!/bin/bash
 # =============================================
 # GROK BATOCERA ASSISTANT v1.5 — FINAL ONE COMMAND
-# Pacman fixed + metadata fixed + auto background + 10-second reboot
+# Your key is baked in • Auto background • 10-second reboot
 # =============================================
 
 clear
@@ -101,7 +103,7 @@ GAMEHOOK
 chmod +x /userdata/system/scripts/grok-metadata.sh
 progress
 
-echo -e "${CYAN}═══ STEP 6: Deploying Grok + auto background start ═══${RESET}"
+echo -e "${CYAN}═══ STEP 6: Deploying Grok daemon + auto background start ═══${RESET}"
 cat << 'PYSCRIPT' > grok.py
 #!/usr/bin/env python3
 import os, time, requests, json, subprocess, pygame
@@ -110,6 +112,7 @@ API_KEY = os.getenv("GROK_API_KEY")
 API_URL = "https://api.x.ai/v1/chat/completions"
 HISTORY_FILE = "/userdata/roms/ports/grok/history.json"
 CURRENT_GAME_FILE = "/tmp/grok_current_game.json"
+SCREENSHOT_PATH = "/userdata/roms/ports/grok/screenshot.png"
 pygame.init()
 pygame.display.set_mode((1,1), pygame.NOFRAME)
 clock = pygame.time.Clock()
@@ -118,9 +121,8 @@ def get_metadata():
         with open(CURRENT_GAME_FILE) as f: return json.load(f)
     return {"game":"Unknown", "system":"Unknown", "rom":"Unknown", "timestamp":time.strftime("%Y-%m-%d %H:%M:%S")}
 def take_screenshot():
-    path = "/userdata/roms/ports/grok/screenshot.png"
-    subprocess.run(["scrot", "-o", path], stdout=subprocess.DEVNULL)
-    return path
+    subprocess.run(["scrot", "-o", SCREENSHOT_PATH], stdout=subprocess.DEVNULL)
+    return SCREENSHOT_PATH
 def ask_grok(prompt, is_translation=False):
     meta = get_metadata()
     screenshot_path = take_screenshot()
@@ -168,6 +170,9 @@ while True:
 PYSCRIPT
 chmod +x grok.py
 progress
+
+# Add your key (already saved, but ensures it's there)
+echo 'export GROK_API_KEY="xai-UCcQcKtlvC4TaXxqotml48cW8x9osoSIYPTJcFjl1wVC9hwkEh6SUeWdAr2qfPEdURg03RrD9XJsFM25"' >> /userdata/system/custom.sh
 
 # Auto background start
 echo '/userdata/roms/ports/grok/grok.py &' >> /userdata/system/custom.sh
