@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================
-# GROK BATOCERA ASSISTANT v1.5 — FINAL ONE COMMAND
-# New splash + metadata + background + 10-second reboot
+# GROK BATOCERA ASSISTANT v1.6 — FINAL
+# New splash + vision + unique screenshots + safe parsing
 # =============================================
 
 clear
@@ -51,7 +51,7 @@ cat << "EOF"
 EOF
 echo -e "${RESET}"
 
-echo -e "${BOLD}${CYAN}                  GROK BATOCERA ASSISTANT v1.5${RESET}"
+echo -e "${BOLD}${CYAN}                  GROK BATOCERA ASSISTANT v1.6${RESET}"
 echo -e "${YELLOW}               The ultimate in-game AI sidekick${RESET}"
 echo ""
 
@@ -61,12 +61,12 @@ progress() {
     echo -e "] ${GREEN}DONE${RESET}"
 }
 
-echo -e "${CYAN}═══ STEP 1: Updating system packages ═══${RESET}"
+echo -e "${CYAN}═══ STEP 1: Updating packages ═══${RESET}"
 pacman -Sy --noconfirm > /dev/null 2>&1
 progress
 
 echo -e "${CYAN}═══ STEP 2: Installing tools ═══${RESET}"
-pacman -S --noconfirm python-pip python-tk xdotool scrot curl jq feh > /dev/null 2>&1
+pacman -S --noconfirm --needed python-pip python-tk xdotool scrot curl jq feh > /dev/null 2>&1
 progress
 
 echo -e "${CYAN}═══ STEP 3: Installing Python packages ═══${RESET}"
@@ -75,11 +75,12 @@ progress
 
 echo -e "${CYAN}═══ STEP 4: Creating folders + icon ═══${RESET}"
 mkdir -p /userdata/roms/ports/grok
+mkdir -p /userdata/system/scripts
 cd /userdata/roms/ports/grok
 curl -o icon.png https://raw.githubusercontent.com/NOOBMASTER2099/batocera-grok/main/icon.png > /dev/null 2>&1
 progress
 
-echo -e "${CYAN}═══ STEP 5: Installing metadata hook (fixed) ═══${RESET}"
+echo -e "${CYAN}═══ STEP 5: Installing metadata hook ═══${RESET}"
 cat << 'GAMEHOOK' > /userdata/system/scripts/grok-metadata.sh
 #!/bin/bash
 if [[ "$1" == "gameStart" ]]; then
@@ -91,47 +92,82 @@ GAMEHOOK
 chmod +x /userdata/system/scripts/grok-metadata.sh
 progress
 
-echo -e "${CYAN}═══ STEP 6: Deploying Grok daemon + auto background start ═══${RESET}"
+echo -e "${CYAN}═══ STEP 6: Deploying Grok daemon (v1.6 with vision) ═══${RESET}"
 cat << 'PYSCRIPT' > grok.py
 #!/usr/bin/env python3
 import os, time, requests, json, subprocess, pygame, base64
 from PIL import Image, ImageDraw, ImageFont
+import textwrap
+
 API_KEY = os.getenv("GROK_API_KEY")
 API_URL = "https://api.x.ai/v1/chat/completions"
 HISTORY_FILE = "/userdata/roms/ports/grok/history.json"
 CURRENT_GAME_FILE = "/tmp/grok_current_game.json"
 SCREENSHOT_PATH = "/userdata/roms/ports/grok/screenshot.png"
 BUBBLE_PATH = "/userdata/roms/ports/grok/bubble.png"
+
+os.makedirs("/userdata/roms/ports/grok/screenshots", exist_ok=True)
+
 pygame.init()
 pygame.display.set_mode((1,1), pygame.NOFRAME)
 clock = pygame.time.Clock()
+
 def get_metadata():
     if os.path.exists(CURRENT_GAME_FILE):
-        with open(CURRENT_GAME_FILE) as f: return json.load(f)
+        try:
+            with open(CURRENT_GAME_FILE) as f:
+                return json.load(f)
+        except:
+            pass
     return {"game":"Unknown", "system":"Unknown", "rom":"Unknown", "timestamp":time.strftime("%Y-%m-%d %H:%M:%S")}
+
 def take_screenshot():
-    subprocess.run(["scrot", "-o", SCREENSHOT_PATH], stdout=subprocess.DEVNULL)
+    subprocess.run(["scrot", "-o", SCREENSHOT_PATH], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return SCREENSHOT_PATH
+
 def encode_image_to_base64(path):
-    with open(path, "rb") as f: return base64.b64encode(f.read()).decode('utf-8')
+    img = Image.open(path)
+    img = img.resize((640, 360))
+    img.save("/tmp/resized.png")
+    with open("/tmp/resized.png", "rb") as f:
+        return base64.b64encode(f.read()).decode('utf-8')
+
 def ask_grok(prompt, is_translation=False):
+    if not API_KEY:
+        return "No API key set. Run the installer again."
     meta = get_metadata()
     screenshot_path = take_screenshot()
-    system_msg = f"You are Grok, the ultimate Batocera sidekick. Current game: {meta['game']} ({meta['system']})."
     if is_translation:
-        system_msg += " Translate the entire screen to English. Be accurate and concise."
-    messages = [{"role": "system", "content": system_msg}, {"role": "user", "content": prompt}]
+        system_msg = "You are Grok in Translation Mode. Translate the entire screen to English. Be accurate and concise."
+    else:
+        system_msg = f"You are Grok, the ultimate Batocera sidekick. Current game: {meta['game']} ({meta['system']}). Give short, actionable advice."
+    image_base64 = encode_image_to_base64(screenshot_path)
+    messages = [
+        {"role": "system", "content": system_msg},
+        {"role": "user", "content": [
+            {"type": "text", "text": prompt},
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_base64}"}}
+        ]}
+    ]
     try:
         r = requests.post(API_URL, headers={"Authorization": f"Bearer {API_KEY}"}, json={"model": "grok-2-vision", "messages": messages}, timeout=25)
-        answer = r.json()["choices"][0]["message"]["content"]
-    except:
-        answer = "Error — check API key or internet."
-    entry = {**meta, "question": prompt, "answer": answer, "screenshot": screenshot_path}
+        data = r.json()
+        answer = data.get("choices", [{}])[0].get("message", {}).get("content", "No response from Grok.")
+    except Exception:
+        answer = "Error contacting Grok. Check your API key or internet."
+    # Unique screenshot for history
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    unique_path = f"/userdata/roms/ports/grok/screenshots/{timestamp}.png"
+    subprocess.run(["cp", SCREENSHOT_PATH, unique_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    entry = {**meta, "question": prompt, "answer": answer, "screenshot": unique_path}
     history = json.load(open(HISTORY_FILE)) if os.path.exists(HISTORY_FILE) else []
     history.append(entry)
-    with open(HISTORY_FILE, "w") as f: json.dump(history, f, indent=2)
+    with open(HISTORY_FILE, "w") as f:
+        json.dump(history, f, indent=2)
     return answer
+
 def show_bubble(text, title="GROK"):
+    subprocess.run(["pkill", "-f", "feh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     img = Image.new('RGBA', (620, 180), (10, 10, 10, 230))
     draw = ImageDraw.Draw(img)
     try:
@@ -141,12 +177,14 @@ def show_bubble(text, title="GROK"):
         font_title = ImageFont.load_default()
         font_text = ImageFont.load_default()
     draw.text((20, 15), title, fill="#00ffcc", font=font_title)
-    draw.text((20, 55), text, fill="#ffffff", font=font_text)
+    wrapped = textwrap.fill(text, width=45)
+    draw.text((20, 55), wrapped, fill="#ffffff", font=font_text)
     img.save(BUBBLE_PATH)
     subprocess.run(["feh", "--title", "GROK", "-x", "-g", "620x180+100+600", "--zoom", "fill", "--no-title", BUBBLE_PATH], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(12)
     subprocess.run(["pkill", "-f", "feh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-print("Grok v1.5 running in background")
+
+print("Grok v1.6 running in background")
 while True:
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
@@ -164,10 +202,11 @@ PYSCRIPT
 chmod +x grok.py
 progress
 
-# Auto background start
+# Auto background start (only once)
+grep -qxF '/userdata/roms/ports/grok/grok.py &' /userdata/system/custom.sh || \
 echo '/userdata/roms/ports/grok/grok.py &' >> /userdata/system/custom.sh
 
-# Download your icon
+# Download icon
 curl -o /userdata/roms/ports/grok/icon.png https://raw.githubusercontent.com/NOOBMASTER2099/batocera-grok/main/icon.png > /dev/null 2>&1
 
 echo -e "${GREEN}${BOLD}"
