@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # =============================================
-# GROK BATOCERA ASSISTANT v1.5 - FIXED BUBBLE
-# Uses Pillow + feh (reliable on Batocera)
+# GROK BATOCERA ASSISTANT v1.6 — FIXED & TIGHTENED
+# pkill feh • API key check • better prompt • cleaner overlay
 # =============================================
 
 import os, time, requests, json, subprocess, pygame, base64
@@ -31,7 +31,55 @@ def take_screenshot():
     subprocess.run(["scrot", "-o", SCREENSHOT_PATH], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return SCREENSHOT_PATH
 
-def create_bubble(text, title="GROK"):
+def encode_image_to_base64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode('utf-8')
+
+def ask_grok(prompt, is_translation=False):
+    if not API_KEY:
+        return "No API key set. Run the installer again or check custom.sh"
+
+    meta = get_metadata()
+    screenshot_path = take_screenshot()
+
+    if is_translation:
+        system_msg = "You are Grok in Translation Mode. Translate the entire screen to English. Be accurate, concise, and natural."
+    else:
+        system_msg = f"""
+You are Grok, an expert gaming assistant.
+Current game: {meta['game']} ({meta['system']}).
+Give short, actionable advice. Focus on what the player should do next.
+If unclear, infer from typical gameplay.
+"""
+
+    messages = [
+        {"role": "system", "content": system_msg},
+        {"role": "user", "content": [
+            {"type": "text", "text": prompt},
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{encode_image_to_base64(screenshot_path)}"}}
+        ]}
+    ]
+
+    try:
+        r = requests.post(API_URL, headers={"Authorization": f"Bearer {API_KEY}"},
+                          json={"model": "grok-2-vision", "messages": messages}, timeout=25)
+        answer = r.json()["choices"][0]["message"]["content"]
+    except Exception:
+        answer = "Error contacting Grok. Check your API key or internet."
+
+    # Save to history
+    entry = {**meta, "question": prompt, "answer": answer, "screenshot": screenshot_path}
+    history = json.load(open(HISTORY_FILE)) if os.path.exists(HISTORY_FILE) else []
+    history.append(entry)
+    with open(HISTORY_FILE, "w") as f:
+        json.dump(history, f, indent=2)
+
+    return answer
+
+def show_bubble(text, title="GROK"):
+    # Kill any old feh windows first (prevents stacking)
+    subprocess.run(["pkill", "-f", "feh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
     img = Image.new('RGBA', (620, 180), (10, 10, 10, 230))
     draw = ImageDraw.Draw(img)
     try:
@@ -43,18 +91,14 @@ def create_bubble(text, title="GROK"):
 
     draw.text((20, 15), title, fill="#00ffcc", font=font_title)
     draw.text((20, 55), text, fill="#ffffff", font=font_text)
-    
     img.save(BUBBLE_PATH)
 
-def show_bubble(text, title="GROK"):
-    create_bubble(text, title)
-    subprocess.run(["feh", "--title", "GROK", "-x", "-g", "620x180+100+600", "--zoom", "fill", "--no-title", BUBBLE_PATH], 
+    subprocess.run(["feh", "--title", "GROK", "-x", "-g", "620x180+100+600", "--zoom", "fill", "--no-title", BUBBLE_PATH],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(12)  # bubble stays 12 seconds
+    time.sleep(12)
     subprocess.run(["pkill", "-f", "feh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-# ==================== MAIN LOOP ====================
-print("Grok v1.5 running in background")
+print("Grok v1.6 running in background")
 print("Select + L1 → Chat")
 print("Select + R1 → Translation")
 
@@ -62,15 +106,12 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             keys = pygame.key.get_pressed()
-            
-            if keys[pygame.K_SELECT] and keys[pygame.K_l]:          # Select + L1
+            if keys[pygame.K_SELECT] and keys[pygame.K_l]:
                 show_bubble("Thinking...", "GROK")
-                answer = ask_grok("Help me with this game right now")   # ← your ask_grok function from before
+                answer = ask_grok("Help me with this game right now")
                 show_bubble(answer, "GROK")
-            
-            elif keys[pygame.K_SELECT] and keys[pygame.K_r]:        # Select + R1
+            elif keys[pygame.K_SELECT] and keys[pygame.K_r]:
                 show_bubble("Translating...", "TRANSLATION")
                 answer = ask_grok("Translate this screen", is_translation=True)
                 show_bubble(answer, "TRANSLATION")
-    
     clock.tick(30)
