@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # =============================================
-# GROK BATOCERA ASSISTANT v1.6 — FIXED & TIGHTENED
-# pkill feh • API key check • better prompt • cleaner overlay
+# GROK BATOCERA ASSISTANT v1.6 — FIXED
+# Vision + unique screenshots + safe parsing + wrapped text
 # =============================================
 
 import os, time, requests, json, subprocess, pygame, base64
 from PIL import Image, ImageDraw, ImageFont
+import textwrap
 
 API_KEY = os.getenv("GROK_API_KEY")
 API_URL = "https://api.x.ai/v1/chat/completions"
@@ -13,6 +14,9 @@ HISTORY_FILE = "/userdata/roms/ports/grok/history.json"
 CURRENT_GAME_FILE = "/tmp/grok_current_game.json"
 SCREENSHOT_PATH = "/userdata/roms/ports/grok/screenshot.png"
 BUBBLE_PATH = "/userdata/roms/ports/grok/bubble.png"
+
+# Create screenshots folder for history
+os.makedirs("/userdata/roms/ports/grok/screenshots", exist_ok=True)
 
 pygame.init()
 pygame.display.set_mode((1, 1), pygame.NOFRAME)
@@ -32,12 +36,15 @@ def take_screenshot():
     return SCREENSHOT_PATH
 
 def encode_image_to_base64(path):
-    with open(path, "rb") as f:
+    img = Image.open(path)
+    img = img.resize((640, 360))           # resize for speed + cost
+    img.save("/tmp/resized.png")
+    with open("/tmp/resized.png", "rb") as f:
         return base64.b64encode(f.read()).decode('utf-8')
 
 def ask_grok(prompt, is_translation=False):
     if not API_KEY:
-        return "No API key set. Run the installer again or check custom.sh"
+        return "No API key set. Run the installer again."
 
     meta = get_metadata()
     screenshot_path = take_screenshot()
@@ -45,30 +52,32 @@ def ask_grok(prompt, is_translation=False):
     if is_translation:
         system_msg = "You are Grok in Translation Mode. Translate the entire screen to English. Be accurate, concise, and natural."
     else:
-        system_msg = f"""
-You are Grok, an expert gaming assistant.
-Current game: {meta['game']} ({meta['system']}).
-Give short, actionable advice. Focus on what the player should do next.
-If unclear, infer from typical gameplay.
-"""
+        system_msg = f"You are Grok, the ultimate Batocera sidekick. Current game: {meta['game']} ({meta['system']}). Give short, actionable advice."
+
+    image_base64 = encode_image_to_base64(screenshot_path)
 
     messages = [
         {"role": "system", "content": system_msg},
         {"role": "user", "content": [
             {"type": "text", "text": prompt},
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{encode_image_to_base64(screenshot_path)}"}}
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_base64}"}}
         ]}
     ]
 
     try:
         r = requests.post(API_URL, headers={"Authorization": f"Bearer {API_KEY}"},
                           json={"model": "grok-2-vision", "messages": messages}, timeout=25)
-        answer = r.json()["choices"][0]["message"]["content"]
+        data = r.json()
+        answer = data.get("choices", [{}])[0].get("message", {}).get("content", "No response from Grok.")
     except Exception:
         answer = "Error contacting Grok. Check your API key or internet."
 
-    # Save to history
-    entry = {**meta, "question": prompt, "answer": answer, "screenshot": screenshot_path}
+    # Save unique screenshot for history
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    unique_path = f"/userdata/roms/ports/grok/screenshots/{timestamp}.png"
+    subprocess.run(["cp", SCREENSHOT_PATH, unique_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    entry = {**meta, "question": prompt, "answer": answer, "screenshot": unique_path}
     history = json.load(open(HISTORY_FILE)) if os.path.exists(HISTORY_FILE) else []
     history.append(entry)
     with open(HISTORY_FILE, "w") as f:
@@ -77,7 +86,6 @@ If unclear, infer from typical gameplay.
     return answer
 
 def show_bubble(text, title="GROK"):
-    # Kill any old feh windows first (prevents stacking)
     subprocess.run(["pkill", "-f", "feh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     img = Image.new('RGBA', (620, 180), (10, 10, 10, 230))
@@ -90,9 +98,10 @@ def show_bubble(text, title="GROK"):
         font_text = ImageFont.load_default()
 
     draw.text((20, 15), title, fill="#00ffcc", font=font_title)
-    draw.text((20, 55), text, fill="#ffffff", font=font_text)
-    img.save(BUBBLE_PATH)
+    wrapped = textwrap.fill(text, width=45)
+    draw.text((20, 55), wrapped, fill="#ffffff", font=font_text)
 
+    img.save(BUBBLE_PATH)
     subprocess.run(["feh", "--title", "GROK", "-x", "-g", "620x180+100+600", "--zoom", "fill", "--no-title", BUBBLE_PATH],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(12)
