@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================
-# GROK BATOCERA ASSISTANT v1.6 — FINAL
-# New splash + vision + unique screenshots + safe parsing
+# GROK BATOCERA ASSISTANT v1.6 — BEST FINAL VERSION
+# New splash you just sent + full vision + unique screenshots
 # =============================================
 
 clear
@@ -114,15 +114,11 @@ clock = pygame.time.Clock()
 
 def get_metadata():
     if os.path.exists(CURRENT_GAME_FILE):
-        try:
-            with open(CURRENT_GAME_FILE) as f:
-                return json.load(f)
-        except:
-            pass
+        with open(CURRENT_GAME_FILE) as f: return json.load(f)
     return {"game":"Unknown", "system":"Unknown", "rom":"Unknown", "timestamp":time.strftime("%Y-%m-%d %H:%M:%S")}
 
 def take_screenshot():
-    subprocess.run(["scrot", "-o", SCREENSHOT_PATH], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(["scrot", "-o", SCREENSHOT_PATH], stdout=subprocess.DEVNULL)
     return SCREENSHOT_PATH
 
 def encode_image_to_base64(path):
@@ -155,15 +151,13 @@ def ask_grok(prompt, is_translation=False):
         answer = data.get("choices", [{}])[0].get("message", {}).get("content", "No response from Grok.")
     except Exception:
         answer = "Error contacting Grok. Check your API key or internet."
-    # Unique screenshot for history
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     unique_path = f"/userdata/roms/ports/grok/screenshots/{timestamp}.png"
-    subprocess.run(["cp", SCREENSHOT_PATH, unique_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(["cp", SCREENSHOT_PATH, unique_path], stdout=subprocess.DEVNULL)
     entry = {**meta, "question": prompt, "answer": answer, "screenshot": unique_path}
     history = json.load(open(HISTORY_FILE)) if os.path.exists(HISTORY_FILE) else []
     history.append(entry)
-    with open(HISTORY_FILE, "w") as f:
-        json.dump(history, f, indent=2)
+    with open(HISTORY_FILE, "w") as f: json.dump(history, f, indent=2)
     return answer
 
 def show_bubble(text, title="GROK"):
