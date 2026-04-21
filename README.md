@@ -6,6 +6,3 @@ Your personal Grok AI companion for Batocera.
 
 M.A.S.O.N. lets you chat with Grok while playing games. Think of it like having Jarvis in your retro gaming machine.
 
-### How to install
-```bash
-curl -sSL https://raw.githubusercontent.com/NOOBMASTER2099/batocera-grok/main/mason-install.sh | bash
