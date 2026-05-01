@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
-# =============================================
-# PROJECT MASON — GROQ FREE VERSION v1.6
-# Fast + Free + Vision + Bottom-Left Bubble
-# =============================================
-
 import os, time, requests, json, subprocess, pygame, base64
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 
 API_KEY = os.getenv("GROQ_API_KEY")
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
+TTS_URL = "https://api.groq.com/openai/v1/audio/speech"
 HISTORY_FILE = "/userdata/roms/ports/grok/history.json"
 CURRENT_GAME_FILE = "/tmp/grok_current_game.json"
 SCREENSHOT_PATH = "/userdata/roms/ports/grok/screenshot.png"
 BUBBLE_PATH = "/userdata/roms/ports/grok/bubble.png"
+AUDIO_PATH = "/userdata/roms/ports/grok/response.wav"
 
 os.makedirs("/userdata/roms/ports/grok/screenshots", exist_ok=True)
-
 pygame.init()
 pygame.display.set_mode((1,1), pygame.NOFRAME)
 clock = pygame.time.Clock()
@@ -27,7 +23,7 @@ def get_metadata():
     return {"game":"Unknown", "system":"Unknown", "rom":"Unknown", "timestamp":time.strftime("%Y-%m-%d %H:%M:%S")}
 
 def take_screenshot():
-    subprocess.run(["scrot", "-o", SCREENSHOT_PATH], stdout=subprocess.DEVNULL)
+    subprocess.run(["scrot", SCREENSHOT_PATH], stdout=subprocess.DEVNULL)
     return SCREENSHOT_PATH
 
 def encode_image_to_base64(path):
@@ -36,6 +32,17 @@ def encode_image_to_base64(path):
     img.save("/tmp/resized.png")
     with open("/tmp/resized.png", "rb") as f:
         return base64.b64encode(f.read()).decode('utf-8')
+
+def speak(text):
+    try:
+        r = requests.post(TTS_URL, headers={"Authorization": f"Bearer {API_KEY}"},
+                          json={"model": "canopylabs/orpheus-v1-english", "input": text, "voice": "hannah", "response_format": "wav"}, timeout=15)
+        if r.status_code == 200:
+            with open(AUDIO_PATH, "wb") as f:
+                f.write(r.content)
+            subprocess.run(["aplay", "-q", AUDIO_PATH], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except:
+        pass
 
 def ask_grok(prompt, is_translation=False):
     if not API_KEY:
@@ -55,10 +62,9 @@ def ask_grok(prompt, is_translation=False):
         ]}
     ]
     try:
-        r = requests.post(API_URL, headers={"Authorization": f"Bearer {API_KEY}"},
-                          json={"model": "llama-3.2-11b-vision-preview", "messages": messages}, timeout=20)
+        r = requests.post(API_URL, headers={"Authorization": f"Bearer {API_KEY}"}, json={"model": "llama-3.2-11b-vision-preview", "messages": messages}, timeout=20)
         data = r.json()
-        answer = data.get("choices", [{}])[0].get("message", {}).get("content", "No response.")
+        answer = data.get("choices", [])[0].get("message", {}).get("content", "No response.")
     except:
         answer = "Error contacting Groq."
     timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -71,7 +77,7 @@ def ask_grok(prompt, is_translation=False):
     return answer
 
 def show_bubble(text, title="MASON"):
-    subprocess.run(["pkill", "-f", "feh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(["pkill", "-f", "MASON"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     img = Image.new('RGBA', (620, 180), (10, 10, 10, 230))
     draw = ImageDraw.Draw(img)
     try:
@@ -85,19 +91,20 @@ def show_bubble(text, title="MASON"):
     draw.text((20, 55), wrapped, fill="#ffffff", font=font_text)
     img.save(BUBBLE_PATH)
     subprocess.run(["feh", "--title", "MASON", "-x", "-g", "620x180+80+650", "--zoom", "fill", "--no-title", BUBBLE_PATH], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(12)
-    subprocess.run(["pkill", "-f", "feh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    time.sleep(8)
+    subprocess.run(["pkill", "-f", "MASON"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-print("Project Mason (Groq free) v1.6 running — Bottom Left")
+print("Project Mason v1.6 with Voice running")
 while True:
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_SELECT] and keys[pygame.K_l]:
+            if keys[pygame.K_LCTRL] and keys[pygame.K_1]:
                 show_bubble("Thinking...", "MASON")
                 answer = ask_grok("Help me with this game right now")
                 show_bubble(answer, "MASON")
-            elif keys[pygame.K_SELECT] and keys[pygame.K_r]:
+                speak(answer)
+            elif keys[pygame.K_LCTRL] and keys[pygame.K_2]:
                 show_bubble("Translating...", "TRANSLATION")
                 answer = ask_grok("Translate this screen", is_translation=True)
                 show_bubble(answer, "TRANSLATION")
