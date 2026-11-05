@@ -1,5 +1,8 @@
 # Project MASON (Batocera sidekick)
 
+Project MASON is Matt's idea — a voice sidekick for Batocera, named after
+his son Mason. Grok wrote the v1 code; v2 is a rebuild of his concept.
+
 > **v2 is a full rewrite.** v1 never worked: it ran `pacman` on Batocera
 > (Buildroot — no pacman exists), hid every error in `/dev/null`, used a
 > pygame window for hotkeys (a game always has focus, so they never fired),
