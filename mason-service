@@ -1,0 +1,29 @@
+#!/bin/bash
+# MASON v2 -- Batocera user service (modern replacement for custom.sh).
+# Installed by mason-install.sh to /userdata/system/services/mason
+# and enabled with:  batocera-services enable mason
+# Manage it: batocera-services start|stop|status mason
+DIR="/userdata/roms/ports/.data/mason"
+case "$1" in
+    start)
+        if pgrep -f mason-daemon.py > /dev/null 2>&1; then
+            echo "MASON daemon already running."
+        else
+            nohup python3 "$DIR/mason-daemon.py" >> "$DIR/daemon.log" 2>&1 &
+            echo "MASON daemon started."
+        fi
+        ;;
+    stop)
+        pkill -f mason-daemon.py 2>/dev/null
+        rm -f "$DIR/daemon.pid"
+        echo "MASON daemon stopped."
+        ;;
+    status)
+        if pgrep -f mason-daemon.py > /dev/null 2>&1; then
+            echo "MASON daemon is running."
+        else
+            echo "MASON daemon is stopped."
+        fi
+        ;;
+esac
+exit 0

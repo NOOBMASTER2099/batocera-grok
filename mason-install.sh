@@ -1,117 +1,111 @@
 #!/bin/bash
-# ===============================================
-#   M.A.S.O.N. v2.5 – FINAL WORKING VERSION
-#   Grok Powered • North Button Ready
-#   Your key is already inside
-# ===============================================
+# ============================================================
+# MASON v2 -- one-shot installer for Batocera. No pacman, no pip,
+# no packages: Batocera has no package manager and a read-only
+# rootfs, so this only downloads plain files into /userdata
+# (the one writable tree) and wires up Batocera's real hooks.
+#
+# Run ON the Batocera box (SSH or F1 terminal), one command:
+#   curl -fsSL -o /tmp/mason-install.sh \
+#     https://raw.githubusercontent.com/NOOBMASTER2099/batocera-grok/mason-v2/mason-install.sh \
+#     && sh /tmp/mason-install.sh
+# Re-run anytime to update.  sh mason-install.sh --uninstall to remove.
+# The only thing it asks you is your Groq API key (once, hidden input).
+# ============================================================
+set -u
+REPO="NOOBMASTER2099/batocera-grok"
+BRANCH="${MASON_BRANCH:-mason-v2}"
+RAW="https://raw.githubusercontent.com/$REPO/$BRANCH"
+DIR="/userdata/roms/ports/.data/mason"
+PORTS="/userdata/roms/ports"
+HOOK="/userdata/system/scripts/mason-game.sh"
+SERVICE="/userdata/system/services/mason"
 
-clear
-echo "========================================"
-echo "   M.A.S.O.N. v2.5 STARTING"
-echo "   Grok Powered In-Game Assistant"
-echo "========================================"
+say()  { printf '%s\n' "$*"; }
+fail() { printf 'FAILED: %s\n' "$*" >&2; exit 1; }
 
-echo "→ Fixing pip..."
-python3 -m ensurepip --upgrade --default-pip > /dev/null 2>&1
+download() { # $1 = remote filename, $2 = local path
+    local url="$RAW/$1" dest="$2"
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL -o "$dest" "$url" || return 1
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO "$dest" "$url" || return 1
+    else
+        fail "need curl or wget (neither found)"
+    fi
+    [ -s "$dest" ] || return 1
+}
 
-echo "→ Installing libraries..."
-python3 -m pip install --break-system-packages --quiet pillow requests opencv-python-headless pygame
+if [ "${1:-}" = "--uninstall" ]; then
+    say "Removing MASON v2..."
+    command -v batocera-services >/dev/null 2>&1 && batocera-services disable mason 2>/dev/null
+    pkill -f mason-daemon.py 2>/dev/null
+    rm -f "$PORTS/MASON.sh" "$HOOK" "$SERVICE"
+    rm -rf "$DIR"
+    say "Removed. Refresh the gamelist and MASON will be gone from Ports."
+    exit 0
+fi
 
-echo "→ Creating M.A.S.O.N. files..."
-mkdir -p ~/mason
-cd ~/mason
+# --- sanity: this must run ON Batocera ---
+[ -d /userdata ] || fail "no /userdata found -- run this ON the Batocera box, not your PC."
+command -v python3 >/dev/null 2>&1 || fail "python3 not found on this box."
+say "MASON v2 installer (branch: $BRANCH)"
+mkdir -p "$DIR/screenshots" /userdata/system/scripts /userdata/system/services || fail "cannot create $DIR"
 
-cat > mason.py << 'EOF'
-#!/usr/bin/env python3
-import time, os, base64, requests, tkinter as tk, threading, pygame
-from datetime import datetime
-from PIL import ImageGrab
-from tkinter import scrolledtext
+# --- download the app (loud failures, no fake DONE) ---
+for f in mason.py mason-daemon.py mason-hook.sh mason-service MASON.sh; do
+    say "  downloading $f ..."
+    download "$f" "/tmp/mason-$f" || fail "could not download $f from $RAW"
+done
+# icon is optional (reuse the repo's existing icon)
+download "icon.png" "/tmp/mason-icon.png" 2>/dev/null || say "  (no icon.png in branch, keeping Ports text entry)"
 
-API_KEY = "xai-UCcQcKtlvC4TaXxqotml48cW8x9osoSIYPTJcFjl1wVC9hwkEh6SUeWdAr2qfPEdURg03RrD9XJsFM25"
+cp /tmp/mason-mason.py "$DIR/mason.py"
+cp /tmp/mason-mason-daemon.py "$DIR/mason-daemon.py"
+cp /tmp/mason-mason-hook.sh "$HOOK"
+cp /tmp/mason-mason-service "$SERVICE"
+cp /tmp/mason-MASON.sh "$PORTS/MASON.sh"
+[ -f /tmp/mason-icon.png ] && cp /tmp/mason-icon.png "$DIR/icon.png"
+chmod +x "$HOOK" "$SERVICE" "$PORTS/MASON.sh" "$DIR/mason.py" "$DIR/mason-daemon.py"
+rm -f /tmp/mason-mason.py /tmp/mason-mason-daemon.py /tmp/mason-mason-hook.sh \
+      /tmp/mason-mason-service /tmp/mason-MASON.sh /tmp/mason-icon.png
 
-print(f"[{datetime.now().strftime('%H:%M:%S')}] M.A.S.O.N. v2.5 is now ACTIVE")
+# --- self-check: the app must at least compile ---
+python3 -m py_compile "$DIR/mason.py" "$DIR/mason-daemon.py" \
+    || fail "downloaded Python files do not compile -- install aborted, old files untouched except the copies above."
 
-def take_screenshot():
-    path = os.path.expanduser(f"~/mason/shot_{int(time.time())}.png")
-    ImageGrab.grab().save(path)
-    return path
+# --- API key: asked once, hidden, stored chmod 600, never printed ---
+if [ ! -s "$DIR/mason.env" ]; then
+    say ""
+    say "Groq API key needed (get one free at console.groq.com)."
+    printf 'Paste Groq API key (hidden, Enter to skip and set it later in Ports -> MASON -> Settings): '
+    stty -echo 2>/dev/null; read -r GROQ_KEY; stty echo 2>/dev/null; say ""
+    if [ -n "${GROQ_KEY:-}" ]; then
+        printf 'GROQ_API_KEY=%s\n' "$GROQ_KEY" > "$DIR/mason.env"
+        chmod 600 "$DIR/mason.env"
+        say "API key saved."
+    else
+        say "Skipped -- set it later from Ports -> MASON -> Settings."
+    fi
+else
+    say "API key already saved, leaving it alone."
+fi
 
-def image_to_base64(path):
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
+# --- voice hotkey daemon: modern services method, start it now ---
+if command -v batocera-services >/dev/null 2>&1; then
+    batocera-services enable mason 2>/dev/null || true
+    batocera-services start mason 2>/dev/null || true
+fi
+if pgrep -f mason-daemon.py >/dev/null 2>&1; then
+    say "Voice hotkey daemon: running."
+else
+    say "Voice hotkey daemon: not running (start it from Ports -> MASON -> option 5; check $DIR/daemon.log if it fails)."
+fi
 
-def send_to_grok(image_path):
-    prompt = "You are M.A.S.O.N., a real-time in-game assistant powered by Grok. Identify the game and current situation, then give clear helpful advice."
-    try:
-        r = requests.post(
-            "https://api.x.ai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {API_KEY}"},
-            json={"model": "grok-2-vision-latest", "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_to_base64(image_path)}"}}]}], "max_tokens": 700},
-            timeout=30
-        )
-        return r.json()["choices"][0]["message"]["content"] if r.status_code == 200 else "API Error"
-    except:
-        return "Connection error - check internet"
-
-def show_overlay(text):
-    root = tk.Tk()
-    root.title("M.A.S.O.N.")
-    root.attributes("-alpha", 0.94)
-    root.attributes("-topmost", True)
-    root.geometry("880x680+1000+80")
-    root.configure(bg="#0a0a0f")
-    tk.Label(root, text="M.A.S.O.N.", font=("Consolas", 24, "bold"), fg="#00ffaa", bg="#0a0a0f").pack(pady=10)
-    tk.Label(root, text="Grok Powered", font=("Consolas", 11), fg="#00cc88", bg="#0a0a0f").pack()
-    txt = scrolledtext.ScrolledText(root, bg="#111118", fg="#00ffaa", font=("Consolas", 12), wrap=tk.WORD)
-    txt.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-    txt.insert(tk.END, text + "\n\nM.A.S.O.N. is Grok Powered.\nUnofficial tool • Use at your own risk.")
-    tk.Button(root, text="CLOSE (ESC)", command=root.destroy, bg="#c22", fg="white", font=("Consolas", 11), height=2).pack(pady=12)
-    root.bind("<Escape>", lambda e: root.destroy())
-    root.mainloop()
-
-def on_hotkey():
-    print("→ Screenshot captured → Sending to Grok...")
-    img = take_screenshot()
-    answer = send_to_grok(img)
-    show_overlay(answer)
-
-def controller_listener():
-    try:
-        pygame.init()
-        pygame.joystick.init()
-        if pygame.joystick.get_count() > 0:
-            joy = pygame.joystick.Joystick(0)
-            joy.init()
-            print(f"Controller ready: {joy.get_name()} → Press NORTH button (Y/△)")
-            while True:
-                pygame.event.pump()
-                for event in pygame.event.get():
-                    if event.type == pygame.JOYBUTTONDOWN and event.button == 3:
-                        on_hotkey()
-                time.sleep(0.05)
-        else:
-            print("No controller → Use Ctrl+Alt+M")
-    except:
-        print("Controller not available → Use Ctrl+Alt+M")
-
-threading.Thread(target=controller_listener, daemon=True).start()
-
-print("\033[1;32mM.A.S.O.N. is running!\033[0m")
-print("Press NORTH button (Y/△) on controller")
-print("or Ctrl+Alt+M on keyboard")
-input("Press Enter to keep running...\n")
-EOF
-
-chmod +x mason.py
-
-cat > run-mason.sh << 'EOF'
-#!/bin/bash
-cd ~/mason
-python3 mason.py
-EOF
-chmod +x run-mason.sh
-
-echo "✅ M.A.S.O.N. is ready!"
-echo "Launching now..."
-./run-mason.sh
+say ""
+say "DONE. Now on the Batocera box:"
+say "  1) START -> GAME SETTINGS -> REFRESH GAMELISTS"
+say "  2) Open Ports -> MASON"
+say "  3) In a game, LCTRL+1 = help, LCTRL+2 = translate (spoken)"
+say "Logs: $DIR/mason.log and $DIR/daemon.log"
+say "Re-run this installer anytime to update."

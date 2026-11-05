@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MASON — Setup &amp; Help</title>
+<meta name="description" content="MASON is a voice sidekick for Batocera. Setup guide, how it works, troubleshooting, and update notes.">
+<style>
+  :root { --bg:#0b0e13; --panel:#141922; --line:#232c3d; --text:#e8edf4;
+         --dim:#9aa7bd; --accent:#00ffcc; --warn:#ffb454; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+         line-height:1.6; }
+  header { padding:48px 20px 28px; text-align:center; }
+  header h1 { margin:0; font-size:44px; letter-spacing:2px; }
+  header h1 span { color:var(--accent); }
+  header p { color:var(--dim); max-width:640px; margin:12px auto 0; }
+  nav { position:sticky; top:0; background:#0f141d; border-top:1px solid var(--line);
+        border-bottom:1px solid var(--line); padding:10px 12px; text-align:center; z-index:10; }
+  nav a { color:var(--dim); text-decoration:none; margin:0 12px; font-size:15px; }
+  nav a:hover { color:var(--accent); }
+  main { max-width:820px; margin:0 auto; padding:28px 20px 60px; }
+  section { margin-bottom:44px; }
+  h2 { font-size:24px; border-bottom:1px solid var(--line); padding-bottom:8px; }
+  h3 { font-size:18px; margin-top:26px; }
+  code { background:#1d2635; padding:2px 6px; border-radius:4px; font-size:14px;
+         word-break:break-all; }
+  pre { background:#10161f; border:1px solid var(--line); border-radius:8px;
+        padding:16px; overflow-x:auto; }
+  pre code { background:none; padding:0; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+          padding:18px 20px; margin:14px 0; }
+  .warn { border-left:4px solid var(--warn); }
+  .accent { border-left:4px solid var(--accent); }
+  table { width:100%; border-collapse:collapse; font-size:15px; }
+  th, td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line);
+           vertical-align:top; }
+  th { color:var(--dim); }
+  kbd { background:#1d2635; border:1px solid var(--line); border-bottom-width:2px;
+        border-radius:4px; padding:1px 7px; font-size:13px; }
+  footer { text-align:center; color:var(--dim); font-size:13px; padding:0 20px 40px; }
+  footer a { color:var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>M.A.S.O.N.</h1>
+  <p>A voice sidekick for Batocera. Ask about the game you're playing, translate
+  a screen, and get a spoken answer — without leaving the couch.</p>
+  <p style="font-size:14px;">Project MASON is Matt's idea — a Batocera sidekick named after his son Mason.</p>
+</header>
+<nav>
+  <a href="#setup">Setup</a>
+  <a href="#how">How it works</a>
+  <a href="#hotkeys">Hotkeys</a>
+  <a href="#files">Files</a>
+  <a href="#trouble">Troubleshooting</a>
+  <a href="#updates">Update notes</a>
+</nav>
+<main>
+
+<section id="setup">
+  <h2>Setup</h2>
+  <p>You need: a Batocera box, internet, and a free Groq API key
+  (<a href="https://console.groq.com" style="color:var(--accent);">console.groq.com</a>).
+  No packages to install, no manual steps — one command does the whole thing.</p>
+  <h3>1. Run the installer on the Batocera box</h3>
+  <p>Over SSH, or on the box itself with the F1 terminal. Paste this:</p>
+  <pre><code>curl -fsSL -o /tmp/mason-install.sh https://raw.githubusercontent.com/NOOBMASTER2099/batocera-grok/mason-v2/mason-install.sh &amp;&amp; sh /tmp/mason-install.sh</code></pre>
+  <p>The installer asks you exactly one thing: your Groq API key (hidden input).
+  It's stored on your box only, locked down (<code>chmod 600</code>), and never
+  printed. If you skip it, you can set it later from the MASON menu.</p>
+  <h3>2. Refresh the game list</h3>
+  <p><strong>START → GAME SETTINGS → REFRESH GAMELISTS</strong></p>
+  <h3>3. Launch it</h3>
+  <p>Open <strong>Ports → MASON</strong>. That's it. Re-run the installer
+  anytime to update.</p>
+  <div class="card accent">
+    <strong>Uninstall:</strong>
+    <pre style="margin:8px 0 0;"><code>sh /tmp/mason-install.sh --uninstall</code></pre>
+    <p style="margin:8px 0 0;">(Download the installer first with the curl command above, then run it with <code>--uninstall</code>.)</p>
+  </div>
+</section>
+
+<section id="how">
+  <h2>How it works</h2>
+  <div class="card">
+    <h3 style="margin-top:0;">Chat</h3>
+    <p>Ports → MASON → <em>Chat with MASON</em>. Type a question, get an answer
+    in text and (if voice is on) spoken out loud. <code>/voice on</code> /
+    <code>/voice off</code> inside chat, <code>/quit</code> to leave.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;">Help with the current game</h3>
+    <p>Batocera tells MASON what you launched through a real game-start hook,
+    so it knows the game and system before you ask. From the menu, or in-game
+    with <kbd>LCTRL</kbd> + <kbd>1</kbd>, it answers with that context.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;">Look at the screen (vision)</h3>
+    <p>MASON screenshots the screen and sends it to a vision model, then
+    explains or translates what it sees. Translation is the killer feature —
+    retro gaming is full of untranslated games, and this reads them for you.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;">Voice</h3>
+    <p>Answers are spoken with Groq's Orpheus voice (default voice
+    <em>hannah</em>, changeable in Settings). If no audio player is found on
+    the box, you still get the text answer.</p>
+  </div>
+  <div class="card warn">
+    <strong>Honest limit — no on-screen bubbles during games.</strong>
+    Batocera games run without an X window to draw on, so MASON answers
+    <em>out loud</em> instead of popping text over your game. Voice hotkeys
+    work while a game has focus; on-screen overlays don't, and any version
+    that promises them is lying to you.
+  </div>
+  <h3>What MASON sends where</h3>
+  <p>Your questions — and screenshots, when you ask a vision question — go to
+  the Groq API, because that's where the models live. Your API key never
+  leaves your box except to authenticate those calls. Chat history stays
+  local in the mason folder.</p>
+</section>
+
+<section id="hotkeys">
+  <h2>Hotkeys (in-game, voice daemon running)</h2>
+  <table>
+    <tr><th>Keys</th><th>Does</th></tr>
+    <tr><td><kbd>LCTRL</kbd> + <kbd>1</kbd></td><td>Help with the current game, spoken</td></tr>
+    <tr><td><kbd>LCTRL</kbd> + <kbd>2</kbd></td><td>Translate the screen to English, spoken</td></tr>
+  </table>
+  <p>The daemon starts automatically as a Batocera user service. You can also
+  start/stop it from the MASON menu (options 5 and 6). The daemon is the one
+  experimental part — see the update notes.</p>
+</section>
+
+<section id="files">
+  <h2>Where everything lives</h2>
+  <table>
+    <tr><th>Path</th><th>What</th></tr>
+    <tr><td><code>/userdata/roms/ports/MASON.sh</code></td><td>Ports menu launcher</td></tr>
+    <tr><td><code>/userdata/roms/ports/.data/mason/</code></td><td>The app, settings, history, logs</td></tr>
+    <tr><td><code>/userdata/roms/ports/.data/mason/mason.env</code></td><td>Your API key (chmod 600 — don't share this file)</td></tr>
+    <tr><td><code>/userdata/system/scripts/mason-game.sh</code></td><td>Game start/stop hook</td></tr>
+    <tr><td><code>/userdata/system/services/mason</code></td><td>Daemon service (Batocera v38+)</td></tr>
+    <tr><td><code>mason.log</code> / <code>daemon.log</code></td><td>Logs, inside the mason folder</td></tr>
+  </table>
+</section>
+
+<section id="trouble">
+  <h2>Troubleshooting</h2>
+  <p>MASON prints real errors instead of hiding them. Here's what they mean:</p>
+  <table>
+    <tr><th>You see</th><th>It means / fix</th></tr>
+    <tr><td>"No Groq API key set"</td><td>Ports → MASON → Settings → option 1, paste your key.</td></tr>
+    <tr><td>"Groq HTTP 401"</td><td>Bad or expired key. Re-paste it in Settings.</td></tr>
+    <tr><td>"Groq HTTP 400 ... model decommissioned"</td><td>A model ID retired. Check the update notes for the current ones, or re-run the installer.</td></tr>
+    <tr><td>Daemon "FAILED TO START"</td><td>Check <code>daemon.log</code>. Common cause: no keyboard event device found (the daemon needs a real keyboard, not just a controller).</td></tr>
+    <tr><td>"no screenshot available"</td><td>Your box has neither scrot nor batocera-screenshot working. Vision falls back to text-only.</td></tr>
+    <tr><td>"no audio player found"</td><td>No aplay/paplay/ffplay/mpv on the box. Text answers still work.</td></tr>
+    <tr><td>MASON not in Ports</td><td>Refresh the gamelist (START → GAME SETTINGS → REFRESH GAMELISTS) and check the installer finished without a FAILED line.</td></tr>
+    <tr><td>"no /userdata found"</td><td>You ran the installer on a PC, not the Batocera box. Run it there.</td></tr>
+  </table>
+</section>
+
+<section id="updates">
+  <h2>Update notes</h2>
+  <div class="card">
+    <h3 style="margin-top:0;">v2.0 — 2026-11-04 — full rewrite</h3>
+    <ul>
+      <li>Rebuilt for Batocera as it actually is: stdlib-only Python, no pacman, no pip, no pygame, no tkinter, no PIL.</li>
+      <li>One-shot installer with loud failures and a self-check — no more fake DONE bars over dead steps.</li>
+      <li>Game detection actually installed where Batocera calls it (<code>system/scripts</code>).</li>
+      <li>Hotkeys read the keyboard at the evdev level, so they work while a game has focus.</li>
+      <li>Daemon runs as a proper Batocera user service (v38+).</li>
+      <li>Current Groq models: chat <code>openai/gpt-oss-20b</code>, vision <code>qwen/qwen3.8-27b</code>, TTS <code>canopylabs/orpheus-v1-english</code> (hannah).</li>
+      <li>Errors print the real message instead of "Error contacting Groq."</li>
+      <li>Voice hotkey daemon + in-game screenshots: <strong>experimental, untested on real hardware.</strong> Chat, game detection, and the installer are the solid core.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0;">v1.6 — retired, did not work</h3>
+    <ul>
+      <li>Ran <code>pacman</code> on Batocera (Buildroot — pacman doesn't exist), so nothing it tried to install ever installed.</li>
+      <li>Hid every install error in <code>/dev/null</code> while printing DONE.</li>
+      <li>Hotkeys used a pygame window that never has focus during a game.</li>
+      <li>Pointed at the retired <code>llama-3.2-11b-vision-preview</code> model.</li>
+      <li>Game-start hook was written to a folder Batocera never calls.</li>
+    </ul>
+  </div>
+  <p style="color:var(--dim); font-size:14px;">Full changelog lives in
+  <code>CHANGELOG.md</code> in the repo. This page mirrors it.</p>
+</section>
+
+</main>
+<footer>
+  MASON — a Batocera sidekick. Code on
+  <a href="https://github.com/NOOBMASTER2099/batocera-grok">GitHub</a>.
+</footer>
+</body>
+</html>
